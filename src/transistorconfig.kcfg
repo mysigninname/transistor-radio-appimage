@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+    http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+    <kcfgfile name="transistorrc" />
+    <group name="Appearance">
+        <entry name="ColorScheme" type="String">
+            <label>Color scheme</label>
+        </entry>
+        <entry name="showTrayIcon" type="Bool">
+            <label>Show icon in system tray</label>
+            <default>true</default>
+        </entry>
+        <entry name="trayIconType" type="Enum">
+            <label>Color/type of the tray icon</label>
+            <choices>
+                <choice name="Colorful">
+                    <label>Colorful</label>
+                </choice>
+                <choice name="Light">
+                    <label>Light</label>
+                </choice>
+                <choice name="Dark">
+                    <label>Dark</label>
+                </choice>
+            </choices>
+            <default>Colorful</default>
+        </entry>
+        <entry name="minimizeToTray" type="Bool">
+            <label>Minimize to system tray instead of closing application</label>
+            <default>true</default>
+        </entry>
+        <entry name="interfaceMode" type="Enum">
+            <label>Which interface to show: automatic, desktop or mobile</label>
+            <choices>
+                <choice name="Desktop">
+                    <label>Desktop</label>
+                </choice>
+                <choice name="Mobile">
+                    <label>Mobile</label>
+                </choice>
+                <choice name="Auto">
+                    <label>Auto</label>
+                </choice>
+            </choices>
+            <default>Auto</default>
+        </entry>
+        <entry name="showTrackImage" type="Bool">
+            <label>Show track image instead of station image if possible</label>
+            <default>true</default>
+        </entry>
+        <entry name="showNotification" type="Bool">
+            <label>Show a notification when a track is changed</label>
+            <default>true</default>
+        </entry>
+        <entry name="audioVolume" type="Double">
+            <label>Audio Volume</label>
+            <default>0.7</default>
+        </entry>
+        <entry name="isMuted" type="Bool">
+            <label>Disable sound</label>
+            <default>false</default>
+        </entry>
+        <entry name="autoupdateInfo" type="Bool">
+            <label>Automatically update info at startup</label>
+            <default>true</default>
+        </entry>
+    </group>
+
+</kcfg>

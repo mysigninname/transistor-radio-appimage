@@ -1,0 +1,7 @@
+[Global]
+IconName=transistor
+Name=Transistor
+DesktopEntry=org.kde.transistor
+
+[Event/songChanged]
+Action=Popup

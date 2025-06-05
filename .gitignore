@@ -1,0 +1,5 @@
+.qodo
+build
+.vscode
+.cache
+.clang-format
