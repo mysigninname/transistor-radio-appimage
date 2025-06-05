@@ -1,6 +1,6 @@
 # Transistor
 
-Transistor is an application for listening to internet radio.
+Internet radio player that provides access to a station database with over 50,000 stations.
 
 ## Features
 
