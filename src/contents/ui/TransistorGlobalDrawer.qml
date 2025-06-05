@@ -1,7 +1,3 @@
-// SPDX-FileCopyrightText: 2020 Tobias Fella <tobias.fella@kde.org>
-// SPDX-FileCopyrightText: 2021-2022 Bart De Vries <bart@mogwai.be>
-// SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL
-
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
