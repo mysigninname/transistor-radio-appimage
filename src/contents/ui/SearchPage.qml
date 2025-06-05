@@ -1,11 +1,6 @@
-// SPDX-FileCopyrightText: 2019 Linus Jahn <lnj@kaidan.im>
-// SPDX-FileCopyrightText: 2022 Devin Lin <devin@kde.org>
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as Controls
-
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.components as Components
 
