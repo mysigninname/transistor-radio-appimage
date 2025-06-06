@@ -1,3 +1,5 @@
+![overview](overview.png)
+
 # Transistor
 
 Internet radio player that provides access to a station database with over 50,000 stations.
