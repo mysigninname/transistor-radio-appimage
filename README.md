@@ -14,7 +14,7 @@ Internet radio player that provides access to a station database with over 50,00
 ```bash
 mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr -GNinja ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=Release -GNinja ..
 ninja
 sudo ninja install
 ```
