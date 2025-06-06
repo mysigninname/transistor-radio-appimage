@@ -8,3 +8,14 @@ Internet radio player that provides access to a station database with over 50,00
 * Easily search and discover new radio stations
 * Automatic recognition of tracks if is possible
 * Responsive application layout, compatible for small and large screens
+
+## Installation
+
+```bash
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=/usr -GNinja ..
+ninja
+sudo ninja install
+```
+
