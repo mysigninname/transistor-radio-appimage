@@ -27,5 +27,5 @@ This project is licensed under GPL-3.0-or-later.
 
 ## Project Website
 
-[transistor-radio.ru](https://transistor-radio.ru)
+[https://transistor-radio.ru](https://transistor-radio.ru)
 
