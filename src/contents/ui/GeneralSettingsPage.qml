@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 FormCard.FormCardPage {
     id: root
@@ -114,6 +114,8 @@ FormCard.FormCardPage {
 
     FormCard.FormCard {
         Layout.fillWidth: true
+
+        Component.onCompleted: console.log("Tray icon settings visible:", SystrayIcon.available)
 
         FormCard.FormSwitchDelegate {
             id: showTrayIcon

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.NavigationTabBar {
     id: navBar

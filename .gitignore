@@ -4,3 +4,9 @@ build
 .cache
 .clang-format
 CMakeLists.txt.user
+
+# Flatpak build artifacts
+.flatpak-builder/
+build-dir/
+repo/
+*.tar.gz

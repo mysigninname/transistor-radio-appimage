@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 ColumnLayout {
     width: parent.width
@@ -57,7 +57,7 @@ ColumnLayout {
         Layout.maximumWidth: parent.width - Kirigami.Units.largeSpacing
         wrapMode: Text.WordWrap
         level: 2
-        text: StationManager.currentStation ? StationManager.currentStation.stationName : ""
+        text: StationManager.currentStation ? StationManager.currentStation.stationName.trim() : ""
     }
 
     

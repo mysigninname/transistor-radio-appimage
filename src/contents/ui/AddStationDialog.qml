@@ -4,7 +4,7 @@ import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import org.kde.kirigamiaddons.components as Components
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.PromptDialog {
     id: addStationDialog

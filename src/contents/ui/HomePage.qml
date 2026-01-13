@@ -1,10 +1,14 @@
+// SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import Qt.labs.platform as Labs
-import org.kde.transistor
+import QtQuick.Dialogs as Dialogs
+import ru.transistor_radio.transistor
 
 FeedPage {
     id: page
@@ -42,8 +46,10 @@ FeedPage {
             icon.name: "document-import-symbolic"
             displayHint: Kirigami.Settings.isMobile ? Kirigami.DisplayHint.IconOnly : Kirigami.DisplayHint.KeepVisible
             onTriggered: {
-                importExportDialog.exportMode = false;
-                importExportDialog.open();
+                var importDialog = Qt.createComponent("ImportExportDialog.qml");
+                var dialog = importDialog.createObject(page);
+                dialog.exportMode = false;
+                dialog.open();
             }
         },
         Kirigami.Action {
@@ -52,8 +58,10 @@ FeedPage {
             displayHint: Kirigami.Settings.isMobile ? Kirigami.DisplayHint.IconOnly : Kirigami.DisplayHint.KeepVisible
             visible: gridView.count > 0
             onTriggered: {
-                importExportDialog.exportMode = true;
-                importExportDialog.open();
+                var exportDialog = Qt.createComponent("ImportExportDialog.qml");
+                var dialog = exportDialog.createObject(page);
+                dialog.exportMode = true;
+                dialog.open();
             }
         }
     ]
@@ -66,7 +74,7 @@ FeedPage {
             width: parent.width - (Kirigami.Units.largeSpacing * 4)
             visible: gridView.count == 0
 
-            icon.name: "transistor"
+            icon.name: "ru.transistor_radio.transistor"
             text: "Your library is empty"
             explanation: "Add new stations by clicking on the button below."
             helpfulAction: Kirigami.Action {
@@ -74,37 +82,6 @@ FeedPage {
                 text: i18n("Add New Stations")
                 onTriggered: {
                     pushPage("DiscoverPage");
-                }
-            }
-        }
-    }
-    Labs.FileDialog {
-        id: importExportDialog
-        property bool exportMode
-        title: exportMode ? i18n("Export stations") : i18n("Import stations")
-        nameFilters: ["Transistor Stations Backup (*.stations)"]
-        folder: Labs.StandardPaths.writableLocation(Labs.StandardPaths.DocumentsLocation)
-        fileMode: exportMode ? Labs.FileDialog.SaveFile : Labs.FileDialog.OpenFile
-        acceptLabel: exportMode ? i18n("Export") : i18n("Import")
-        onVisibleChanged: {
-            if (visible) {
-                const home = Labs.StandardPaths.writableLocation(Labs.StandardPaths.DocumentsLocation);
-                currentFile = "file:///" + home + "/transistor.stations";
-            }
-        }
-        onAccepted: {
-            let localPath = currentFile.toString().replace("file://", "");
-            if (exportMode) {
-                if (StationDBModel.exportStations(localPath)) {
-                    showPassiveNotification(i18n("Stations saved successfully"));
-                } else {
-                    showPassiveNotification(i18n("An error occurred while saving"));
-                }
-            } else {
-                if (StationDBModel.importStations(localPath)) {
-                    showPassiveNotification(i18n("Stations loaded successfully"));
-                } else {
-                    showPassiveNotification(i18n("An error occurred when uploading"));
                 }
             }
         }

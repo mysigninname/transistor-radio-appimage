@@ -1,3 +1,8 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "StationInfo.h"
 
 StationInfo::StationInfo(QObject *parent)
@@ -185,4 +190,26 @@ void StationInfo::setStationIsLocal(const bool &newStationIsLocal)
         return;
     m_stationIsLocal = newStationIsLocal;
     Q_EMIT stationIsLocalChanged();
+}
+
+StationInfo *StationInfo::createFromData(const QVariantMap &data, QObject *parent, int songIndex)
+{
+    StationInfo *stationInfo = new StationInfo(parent);
+    if (songIndex != -1) {
+        stationInfo->setSongIndex(songIndex);
+    }
+    stationInfo->setStationName(data.value(QStringLiteral("stationName")).toString());
+    stationInfo->setStationUuid(data.value(QStringLiteral("stationUuid")).toString());
+    stationInfo->setStationImageSource(QUrl(data.value(QStringLiteral("stationImageSource")).toString()));
+    stationInfo->setStationSource(QUrl(data.value(QStringLiteral("stationSource")).toString()));
+    stationInfo->setStationCountry(data.value(QStringLiteral("stationCountry")).toString());
+    stationInfo->setStationTags(data.value(QStringLiteral("stationTags")).toString());
+    stationInfo->setStationLanguage(data.value(QStringLiteral("stationLanguage")).toString());
+    stationInfo->setStationVotes(data.value(QStringLiteral("stationVotes")).toInt());
+    stationInfo->setStationState(data.value(QStringLiteral("stationState")).toString());
+    stationInfo->setStationBitrate(data.value(QStringLiteral("stationBitrate")).toInt());
+    stationInfo->setStationCodec(data.value(QStringLiteral("stationCodec")).toString());
+    stationInfo->setStationHomepage(data.value(QStringLiteral("stationHomepage")).toString());
+    stationInfo->setStationIsLocal(data.value(QStringLiteral("stationIsLocal")).toBool());
+    return stationInfo;
 }

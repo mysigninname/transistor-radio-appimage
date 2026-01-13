@@ -1,19 +1,24 @@
+// SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 GridView {
 
     id: gridView
     interactive: true
     boundsBehavior: Flickable.StopAtBounds
+    reuseItems: true
+    focus: true
     readonly property real effectiveWidth: width - leftMargin - rightMargin
-    readonly property real targetDelegateWidth: Kirigami.Units.gridUnit * 22
-    readonly property real minimumDelegateWidth: Kirigami.Units.gridUnit * 16
+    readonly property real targetDelegateWidth: Kirigami.Units.gridUnit * 18
+    readonly property real minimumDelegateWidth: Kirigami.Units.gridUnit * 12
     readonly property real maximumColumns: 6
-    readonly property int columns: effectiveWidth <= Kirigami.Units.gridUnit * 25 ? 1 : Math.max(2, Math.min(maximumColumns, Math.floor(effectiveWidth / minimumDelegateWidth), Math.ceil(effectiveWidth / targetDelegateWidth)))
+    readonly property int columns: Math.max(1, Math.min(maximumColumns, Math.floor(effectiveWidth / targetDelegateWidth)))
     moveDisplaced: Transition {
         NumberAnimation {
             properties: "x,y"
@@ -21,7 +26,7 @@ GridView {
             easing.type: Easing.InOutQuad
         }
     }
-    
+
     topMargin: Kirigami.Units.largeSpacing
     bottomMargin: Kirigami.Units.largeSpacing
     leftMargin: Kirigami.Units.largeSpacing
@@ -30,5 +35,5 @@ GridView {
     cellHeight: Kirigami.Units.gridUnit * 4 + Kirigami.Units.smallSpacing
     currentIndex: -1
     delegate: ListDelegate {}
-    
+
 }

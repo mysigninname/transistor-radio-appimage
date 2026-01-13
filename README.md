@@ -21,3 +21,7 @@ ninja
 sudo ninja install
 ```
 
+## License
+
+This project is licensed under GPL-3.0-or-later.
+

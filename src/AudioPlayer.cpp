@@ -1,21 +1,37 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "AudioPlayer.h"
+#include "NotificationManager.h"
 #include "StationManager.h"
 #include "transistorconfig.h"
-#include <KNotification>
+#include <QBuffer>
+#include <QColor>
+#include <QDebug>
+#include <QDir>
+#include <QEventLoop>
+#include <QFont>
+#include <QIODevice>
+#include <QIcon>
 #include <QMediaMetaData>
+#include <QMetaObject>
+#include <QNetworkDiskCache>
+#include <QPainter>
 #include <QPixmap>
 #include <QRegularExpression>
+#include <QStandardPaths>
+#include <QTemporaryFile>
+#include <QThreadPool>
 #include <QTimer>
-#include <qdebug.h>
-#include <qlogging.h>
 #include <qmediaplayer.h>
 
 AudioPlayer::AudioPlayer(QObject *parent)
     : QObject(parent)
     , m_audioOutput(new QAudioOutput(this))
-    , m_manager(new QNetworkAccessManager(this))
-    , m_reply(nullptr)
-    , m_icyMetaint(0)
+    , m_streamReader(new StreamReader(this))
+    , m_notificationManager(new NotificationManager(this))
 {
     const auto &audioOutputs = QMediaDevices::audioOutputs();
     if (!audioOutputs.isEmpty()) {
@@ -25,6 +41,8 @@ AudioPlayer::AudioPlayer(QObject *parent)
     connect(&m_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, &AudioPlayer::onMediaStatusChanged);
     connect(&m_audioOutput, &QAudioOutput::mutedChanged, this, &AudioPlayer::mutedChanged);
     connect(this, &AudioPlayer::streamTitleChanged, this, &AudioPlayer::showNotification);
+    connect(m_streamReader, &StreamReader::metadataParsed, this, &AudioPlayer::onMetadataParsed);
+    connect(nullptr, &QMediaDevices::audioOutputsChanged, this, &AudioPlayer::onAudioOutputsChanged);
 }
 
 QString AudioPlayer::streamTitle() const
@@ -36,18 +54,14 @@ void AudioPlayer::setStreamTitle(const QString &newStreamTitle)
 {
     if (m_streamTitle != newStreamTitle) {
         m_streamTitle = newStreamTitle;
-        Q_EMIT streamTitleChanged();
     }
+    Q_EMIT streamTitleChanged();
 }
 
 void AudioPlayer::startStream(const QUrl &url)
 {
     stopStream();
-
-    QNetworkRequest request(url);
-    request.setRawHeader("Icy-Metadata", "1");
-    m_reply = m_manager->get(request);
-    connect(m_reply, &QNetworkReply::readyRead, this, &AudioPlayer::onReadyRead);
+    m_streamReader->startStream(url);
 }
 
 void AudioPlayer::stopStream()
@@ -56,21 +70,15 @@ void AudioPlayer::stopStream()
     setStreamUrl(QString());
     Q_EMIT streamTitleChanged();
     Q_EMIT streamUrlChanged();
-    if (m_reply) {
-        m_reply->disconnect();
-        m_reply->deleteLater();
-        m_reply = nullptr;
-    }
-    m_buffer.clear();
-    m_icyMetaint = 0;
+    m_streamReader->stopStream();
 }
 
 void AudioPlayer::setStreamUrl(const QString &newStreamUrl)
 {
     if (m_streamUrl != newStreamUrl) {
         m_streamUrl = newStreamUrl;
-        Q_EMIT streamUrlChanged();
     }
+    Q_EMIT streamUrlChanged();
 }
 
 QString AudioPlayer::streamUrl() const
@@ -87,33 +95,30 @@ void AudioPlayer::showNotification()
         return;
     }
 
-    KNotification *notification = new KNotification(QStringLiteral("songChanged"));
-    notification->setTitle(StationManager::instance()->currentStation()->stationName().trimmed());
-    notification->setText(streamTitle());
-
-    QTimer::singleShot(500, this, [this, notification]() {
-        QUrl imageUrl = !streamUrl().isEmpty() ? QUrl(streamUrl()) : StationManager::instance()->currentStation()->stationImageSource();
-
-        if (!imageUrl.isEmpty()) {
-            QNetworkRequest request(imageUrl);
-            QNetworkReply *m_reply = m_manager->get(request);
-
-            connect(m_reply, &QNetworkReply::finished, this, [notification, m_reply]() {
-                if (m_reply->error() == QNetworkReply::NoError) {
-                    QByteArray imageData = m_reply->readAll();
-                    QPixmap pixmap;
-                    if (pixmap.loadFromData(imageData)) {
-                        notification->setPixmap(pixmap);
-                    }
-                }
-                notification->sendEvent();
-                m_reply->deleteLater();
-            });
-        } else {
-            notification->setIconName(QStringLiteral("transistor"));
-            notification->sendEvent();
-        }
+    // Delay notification to allow streamUrl to be set
+    QTimer::singleShot(1000, this, [this]() {
+        showNotificationDelayed();
     });
+}
+
+void AudioPlayer::showNotificationDelayed()
+{
+    QString stationName = StationManager::instance()->currentStation()->stationName().trimmed();
+    QString streamTitle = this->streamTitle();
+    QString streamUrlStr = streamUrl();
+    QUrl stationImage = StationManager::instance()->currentStation()->stationImageSource();
+
+    m_notificationManager->showNotification(stationName, streamTitle, streamUrlStr, stationImage);
+}
+
+void AudioPlayer::onMetadataParsed(const QString &title, const QString &url, bool hasTitle, bool hasUrl)
+{
+    if (hasTitle) {
+        setStreamTitle(title);
+    }
+    if (hasUrl) {
+        setStreamUrl(url);
+    }
 }
 
 QString AudioPlayer::errorString() const
@@ -125,77 +130,6 @@ void AudioPlayer::setErrorString(const QString &newErrorString)
 {
     m_errorString = newErrorString;
     Q_EMIT streamUrlChanged();
-}
-void AudioPlayer::onReadyRead()
-{
-    if (m_reply->error() != QNetworkReply::NoError) {
-        qDebug() << "Failed to connect to stream. Error:" << m_reply->errorString();
-        stopStream();
-        return;
-    }
-
-    if (m_icyMetaint == 0) {
-        m_icyMetaint = m_reply->rawHeader("icy-metaint").toInt();
-        if (m_icyMetaint <= 0) {
-            qDebug() << "Icy-Metaint header not found or metaint is 0.";
-            stopStream();
-            return;
-        }
-    }
-    m_buffer.append(m_reply->readAll());
-
-    while (m_buffer.size() > m_icyMetaint) {
-        QByteArray audioData = m_buffer.left(m_icyMetaint);
-
-        m_buffer.remove(0, m_icyMetaint);
-
-        if (m_buffer.isEmpty())
-            break;
-
-        uint metaLength = static_cast<uint>(m_buffer[0]) * 16;
-        m_buffer.remove(0, 1);
-
-        if (metaLength > 0 && m_buffer.size() >= metaLength) {
-            QByteArray metadata = m_buffer.left(metaLength);
-            if (metadata.size() > 1 || metadata[0] == '\0') {
-                parseMetadata(metadata);
-            }
-            m_buffer.remove(0, metaLength);
-        }
-    }
-}
-
-void AudioPlayer::parseMetadata(const QByteArray &metadata)
-{
-    QByteArray cleanData = metadata;
-    int nullPos = cleanData.indexOf('\0');
-    if (nullPos != -1) {
-        cleanData.truncate(nullPos);
-    }
-
-    QString decoded = QString::fromUtf8(cleanData).trimmed();
-
-    QRegularExpression re(QStringLiteral(R"(StreamTitle=([\'"]?)(.*?)\1;)"),
-                          QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
-
-    QRegularExpressionMatch match = re.match(decoded);
-    if (match.hasMatch()) {
-        QString title = match.captured(2).trimmed();
-        title.remove(QRegularExpression(QStringLiteral("^['\"]|['\"]$")));
-        setStreamTitle(title);
-
-        QRegularExpression urlRe(QStringLiteral(R"(StreamUrl=([\'"]?)(.*?)\1;)"),
-                                 QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
-
-        QRegularExpressionMatch urlMatch = urlRe.match(decoded);
-        if (urlMatch.hasMatch()) {
-            QString url = urlMatch.captured(2).trimmed();
-            url.remove(QRegularExpression(QStringLiteral("^['\"]|['\"]$")));
-            setStreamUrl(url.startsWith(QStringLiteral("http"), Qt::CaseInsensitive) ? url : QString());
-        } else {
-            setStreamUrl(QString());
-        }
-    }
 }
 
 bool AudioPlayer::isMuted() const
@@ -263,4 +197,48 @@ void AudioPlayer::onMediaStatusChanged(QMediaPlayer::MediaStatus status)
         Q_EMIT playingChanged();
     }
     Q_EMIT mediaLoadingChanged();
+}
+
+void AudioPlayer::onAudioOutputsChanged()
+{
+    updateAudioDevice();
+}
+
+void AudioPlayer::updateAudioDevice()
+{
+    const QList<QAudioDevice> availableDevices = QMediaDevices::audioOutputs();
+    const QAudioDevice currentDevice = m_audioOutput.device();
+
+    if (availableDevices.contains(currentDevice)) {
+        // Current device is still available, no change needed
+        return;
+    }
+
+    if (!availableDevices.isEmpty()) {
+        m_audioOutput.setDevice(availableDevices.first());
+        Q_EMIT deviceChanged();
+    } else {
+    }
+}
+
+QList<QAudioDevice> AudioPlayer::availableAudioDevices() const
+{
+    return QMediaDevices::audioOutputs();
+}
+
+QAudioDevice AudioPlayer::currentAudioDevice() const
+{
+    return m_audioOutput.device();
+}
+
+void AudioPlayer::setAudioDeviceById(const QString &id)
+{
+    const QList<QAudioDevice> devices = QMediaDevices::audioOutputs();
+    for (const QAudioDevice &device : devices) {
+        if (device.id() == id.toUtf8()) {
+            m_audioOutput.setDevice(device);
+            Q_EMIT deviceChanged();
+            break;
+        }
+    }
 }

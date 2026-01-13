@@ -1,17 +1,28 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #ifndef AUDIOPLAYER_H
 #define AUDIOPLAYER_H
 
-#include <QMediaPlayer>
-#include <QMediaDevices>
+#include "NotificationManager.h"
+#include "StreamReader.h"
 #include <QAudioDevice>
 #include <QAudioOutput>
-#include <KNotification>
+#include <QJSEngine>
+#include <QLoggingCategory>
+#include <QMediaDevices>
+#include <QMediaPlayer>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QUrl>
 #include <QObject>
+#include <QPointer>
 #include <QQmlEngine>
-#include <QJSEngine>
+#include <QRunnable>
+#include <QThreadPool>
+#include <QUrl>
+#include <QVector>
 #include <qtmetamacros.h>
 
 class AudioPlayer : public QObject
@@ -43,8 +54,9 @@ public:
     void setStreamTitle(const QString &newStreamTitle);
     void setStreamUrl(const QString &newStreamUrl);
     void setErrorString(const QString &newErrorString);
-    void parseMetadata(const QByteArray &metadata);
-    
+    Q_INVOKABLE QList<QAudioDevice> availableAudioDevices() const;
+    Q_INVOKABLE QAudioDevice currentAudioDevice() const;
+    Q_INVOKABLE void setAudioDeviceById(const QString &id);
 
 Q_SIGNALS:
     void playingChanged();
@@ -53,25 +65,61 @@ Q_SIGNALS:
     void streamTitleChanged();
     void streamUrlChanged();
     void errorStringChanged();
-    
+    void deviceChanged();
 
 private Q_SLOTS:
     void onMediaStatusChanged(QMediaPlayer::MediaStatus status);
-    void onReadyRead();
     void showNotification();
+    void showNotificationDelayed();
+    void onMetadataParsed(const QString &title, const QString &url, bool hasTitle, bool hasUrl);
+    void onAudioOutputsChanged();
 
 private:
+    class RingBuffer
+    {
+    public:
+        RingBuffer(int maxSize = 1024 * 1024, int minSize = 64 * 1024, int maxMaxSize = 10 * 1024 * 1024); // Default 1MB, min 64KB, max 10MB
+        void append(const QByteArray &data);
+        QByteArray take(int size);
+        int size() const;
+        void clear();
+        void setMaxSize(int maxSize);
+        bool isEmpty() const;
+        char peek(int index = 0) const;
+
+    private:
+        QVector<char> m_data;
+        int m_head;
+        int m_tail;
+        int m_size;
+        int m_maxSize;
+        int m_minSize;
+        int m_maxMaxSize;
+    };
+
+private:
+    class MetadataParserRunnable : public QRunnable
+    {
+    public:
+        MetadataParserRunnable(AudioPlayer *player, const QByteArray &metadata);
+        void run() override;
+
+    private:
+        AudioPlayer *m_player;
+        QByteArray m_metadata;
+    };
+
     QMediaPlayer m_mediaPlayer;
     QAudioOutput m_audioOutput;
     bool m_playing = false;
     bool m_loadingMedia = false;
-    QNetworkAccessManager *m_manager;
-    QNetworkReply *m_reply;
-    QByteArray m_buffer;
-    int m_icyMetaint;
+    StreamReader *m_streamReader;
+    NotificationManager *m_notificationManager;
     QString m_streamTitle;
     QString m_streamUrl;
     QString m_errorString;
+
+    void updateAudioDevice();
 };
 
 #endif // AUDIOPLAYER_H

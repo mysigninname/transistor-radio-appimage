@@ -1,8 +1,11 @@
+// SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 FeedPage {
     id: page

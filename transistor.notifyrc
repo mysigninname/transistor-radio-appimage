@@ -1,7 +1,9 @@
 [Global]
-IconName=transistor
+IconName=ru.transistor_radio.transistor
 Name=Transistor
-DesktopEntry=org.kde.transistor
+DesktopEntry=ru.transistor_radio.transistor
+Comment=Internet radio player
 
 [Event/songChanged]
 Action=Popup
+IconName=ru.transistor_radio.transistor

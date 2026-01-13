@@ -1,3 +1,8 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #pragma once
 
 #include <QObject>

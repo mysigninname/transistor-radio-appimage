@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
@@ -5,7 +8,7 @@ import QtCore
 import org.kde.kirigami as Kirigami
 import org.kde.config as KConfig
 //import org.kde.kirigamiaddons.components as Components
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.ApplicationWindow {
     id: transistorMainWindow
@@ -43,10 +46,10 @@ Kirigami.ApplicationWindow {
         if (page === "SettingsView") {
             settingsView.open();
         } else {
-            var pageObject = Qt.createComponent("org.kde.transistor", page);
+            var pageObject = Qt.createComponent("ru.transistor_radio.transistor", page);
             if (!pageObject) {
                 page = "HomePage";
-                pageObject = Qt.createComponent("org.kde.transistor", page);
+                pageObject = Qt.createComponent("ru.transistor_radio.transistor", page);
             }
             pageStack.clear();
             pageStack.layers.clear();

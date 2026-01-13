@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import org.kde.kirigami.private as KirigamiPrivate
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.ScrollablePage {
     id: infoDialog
@@ -92,7 +92,7 @@ Kirigami.ScrollablePage {
             clip: true
             Layout.maximumWidth: parent.width
             elide: Text.ElideRight
-            text: feed ? feed.stationName : ""
+            text: feed ? feed.stationName.trim() : ""
         }
 
         Kirigami.UrlButton {
@@ -217,7 +217,7 @@ Kirigami.ScrollablePage {
                 contentItem: RowLayout {
                     GridLayout {
                         Layout.fillWidth: true
-                        width: parent.width
+                        width: parent.width - copyButton.width
                         rowSpacing: 0
                         columns: isMobile ? 1 : 2
                         rows: isMobile ? 2 : 1
@@ -240,6 +240,7 @@ Kirigami.ScrollablePage {
                         }
                     }
                     Controls.ToolButton {
+                        id: copyButton
                         icon.name: "edit-copy"
                         onClicked: {
                             KirigamiPrivate.CopyHelperPrivate.copyTextToClipboard(streamLink.url);

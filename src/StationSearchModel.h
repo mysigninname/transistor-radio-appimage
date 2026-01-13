@@ -1,11 +1,17 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #ifndef STATIONSEARCHMODEL_H
 #define STATIONSEARCHMODEL_H
 
+#include "ApiManager.h"
 #include "StationAbstractModel.h"
 #include <QAbstractListModel>
-#include <QDnsLookup>
-#include <QNetworkAccessManager>
-#include <QTimer>
+#include <QCoreApplication>
+#include <QLoggingCategory>
+#include <QThread>
 
 class StationSearchModel : public StationAbstractModel
 {
@@ -23,17 +29,18 @@ public:
 public Q_SLOTS:
     void getData(const QString &text, const int &limit, const int &offset, const bool &reset, const bool &search);
     QString lookupServers();
+    void onSearchFinished(const QList<QVariantMap> &stationsData);
+    void onErrorOccurred(const QString &error);
+    void onSearchStarted();
 
 Q_SIGNALS:
     void isSearchingChanged();
 
 private:
-    QNetworkAccessManager m_networkManager;
-    QNetworkReply *m_reply = nullptr;
-    QNetworkReply *meta_reply = nullptr;
+    ApiManager *m_apiManager;
     bool m_isSearching = false;
-    QDnsLookup *m_dns;
-    
 };
+
+Q_DECLARE_LOGGING_CATEGORY(transistorApi)
 
 #endif // STATIONSEARCHMODEL_H

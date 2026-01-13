@@ -1,6 +1,11 @@
 #include <KColorSchemeManager>
 #include <QAbstractItemModel>
 
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "ColorSchemer.h"
 
 ColorSchemer::ColorSchemer(QObject *parent)

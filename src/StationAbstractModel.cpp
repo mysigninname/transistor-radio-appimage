@@ -1,6 +1,12 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "StationAbstractModel.h"
 #include "StationInfo.h"
 #include "StationManager.h"
+#include <QMetaObject>
 #include <QVariant>
 
 StationAbstractModel::StationAbstractModel(QObject *parent)

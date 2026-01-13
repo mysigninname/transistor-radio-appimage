@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.ShadowedRectangle {
     height: Kirigami.Units.iconSizes.huge + Kirigami.Units.smallSpacing

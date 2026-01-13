@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.Action {
     id: act
@@ -9,7 +9,7 @@ Kirigami.Action {
     property string description
     property string label
     property string request
-    displayHint: Kirigami.Settings.isMobile ? Kirigami.DisplayHint.IconOnly : Kirigami.DisplayHint.KeepVisible  
+    displayHint: Kirigami.Settings.isMobile ? Kirigami.DisplayHint.IconOnly : Kirigami.DisplayHint.KeepVisible
     icon.name: label
     text: title
     checkable: true

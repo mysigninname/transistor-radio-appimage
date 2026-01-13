@@ -4,7 +4,7 @@ import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.formcard as FormCard
 import org.kde.kirigami.private as KirigamiPrivate
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 FormCard.AbstractFormDelegate {
     required property string type

@@ -3,11 +3,10 @@
 [Desktop Entry]
 Name=Transistor
 Comment=Internet radio player
-Version=1.0
 Exec=transistor
-Icon=transistor
+Icon=ru.transistor_radio.transistor
 Type=Application
 Terminal=false
 # Add an actual main category here (and possibly applicable additional ones)
 #   https://specifications.freedesktop.org/menu-spec/latest/apa.html#main-category-registry
-Categories=Qt;KDE;AudioVideo;Player;
+Categories=Qt;KDE;AudioVideo;Player;Audio;

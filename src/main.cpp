@@ -1,3 +1,8 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "AudioPlayer.h"
 #include "StationDBModel.h"
 #include <QtGlobal>
@@ -68,7 +73,7 @@ int main(int argc, char *argv[])
 #endif
 
     KLocalizedString::setApplicationDomain("transistor");
-    QCoreApplication::setOrganizationName(u"KDE"_s);
+    QCoreApplication::setOrganizationName(u"ru.transistor_radio"_s);
 
     KAboutData aboutData(
         // The program name used internally.
@@ -80,37 +85,38 @@ int main(int argc, char *argv[])
         // Short description of what the app does.
         i18n("Internet radio player"),
         // The license this code is released under.
-        KAboutLicense::GPL,
+        KAboutLicense::GPL_V3,
         // Copyright Statement.
         i18n("(c) 2024"));
     aboutData.addAuthor(i18nc("@info:credit", "Yuri Saurov"), i18nc("@info:credit", "Maintainer"), u"dr@i-glu4it.ru"_s, u"https://i-glu4it.ru"_s);
-    aboutData.setTranslator(i18nc("NAME OF TRANSLATORS", "Your names"), i18nc("EMAIL OF TRANSLATORS", "Your emails"));
+    // aboutData.setTranslator(i18nc("NAME OF TRANSLATORS", "Your names"), i18nc("EMAIL OF TRANSLATORS", "Your emails"));
+    aboutData.setBugAddress("https://invent.kde.org/saurov/transistor/-/issues");
     KAboutData::setApplicationData(aboutData);
-    QGuiApplication::setWindowIcon(QIcon::fromTheme(u"org.kde.transistor"_s));
+    QGuiApplication::setWindowIcon(QIcon::fromTheme(u"ru.transistor_radio.transistor"_s));
 
     QQmlApplicationEngine engine;
 
-    qmlRegisterSingletonInstance("org.kde.transistor.settings", 1, 0, "TransistorConfig", TransistorConfig::self());
+    qmlRegisterSingletonInstance("ru.transistor_radio.transistor.settings", 1, 0, "TransistorConfig", TransistorConfig::self());
 
     if (!TransistorConfig::self()->colorScheme().isEmpty()) {
         ColorSchemer::instance().apply(TransistorConfig::self()->colorScheme());
     }
 
     AudioPlayer *audioPlayer = new AudioPlayer(&app);
-    qmlRegisterSingletonInstance("org.kde.transistor", 1, 0, "AudioPlayer", audioPlayer);
+    qmlRegisterSingletonInstance("ru.transistor_radio.transistor", 1, 0, "AudioPlayer", audioPlayer);
 
     StationSearchModel *stationSearchModel = new StationSearchModel(&app);
-    qmlRegisterSingletonInstance("org.kde.transistor", 1, 0, "StationSearchModel", stationSearchModel);
+    qmlRegisterSingletonInstance("ru.transistor_radio.transistor", 1, 0, "StationSearchModel", stationSearchModel);
 
     StationDBModel *stationDBModel = new StationDBModel(&app);
-    qmlRegisterSingletonInstance("org.kde.transistor", 1, 0, "StationDBModel", stationDBModel);
+    qmlRegisterSingletonInstance("ru.transistor_radio.transistor", 1, 0, "StationDBModel", stationDBModel);
 
     StationManager *stationManager = StationManager::instance();
-    qmlRegisterSingletonInstance("org.kde.transistor", 1, 0, "StationManager", stationManager);
-    
+    qmlRegisterSingletonInstance("ru.transistor_radio.transistor", 1, 0, "StationManager", stationManager);
+
     QObject::connect(&app, &QCoreApplication::aboutToQuit, TransistorConfig::self(), &TransistorConfig::save);
     engine.rootContext()->setContextObject(new KLocalizedContext(&engine));
-    engine.loadFromModule("org.kde.transistor", u"Main");
+    engine.loadFromModule("ru.transistor_radio.transistor", u"Main");
 
     if (engine.rootObjects().isEmpty()) {
         return -1;

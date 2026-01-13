@@ -1,9 +1,16 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #include "DatabaseManager.h"
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QSqlError>
 #include <QSqlQuery>
+
+Q_LOGGING_CATEGORY(transistorDb, "transistor.db")
 
 DatabaseManager &DatabaseManager::instance()
 {
@@ -30,7 +37,6 @@ DatabaseManager::~DatabaseManager()
 bool DatabaseManager::open()
 {
     if (!m_db.open()) {
-        qCritical() << "Cannot open database:" << m_db.lastError().text();
         return false;
     }
 
@@ -53,6 +59,11 @@ bool DatabaseManager::open()
                        "stationIsLocal INTEGER,"
                        "position INTEGER DEFAULT 0"
                        ");"));
+
+    // Create indexes for frequently used fields
+    query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS idx_stationUuid ON stations(stationUuid);"));
+    query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS idx_position ON stations(position);"));
+    query.exec(QStringLiteral("CREATE INDEX IF NOT EXISTS idx_stationIsLocal ON stations(stationIsLocal);"));
 
     return true;
 }

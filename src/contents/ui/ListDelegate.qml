@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Item {
     id: cardParent
-    width: gridView.cellWidth
-    height: gridView.cellHeight
+    property var view: GridView.view || ListView.view
+    width: view.cellWidth || view.width
+    height: view.cellHeight || (Kirigami.Units.gridUnit * 4 + Kirigami.Units.smallSpacing)
     required property string stationName
     required property string stationImageSource
     required property string stationSource
@@ -49,13 +50,14 @@ Item {
                 }
 
                 StationIcon {
+                    id: stationIcon
                     title: stationName
                     width: Kirigami.Units.iconSizes.huge + Kirigami.Units.smallSpacing
                     height: width
                     color: "transparent"
                     asynchronous: true
                     fillMode: Image.PreserveAspectFit
-                    source: stationImageSource
+                    source: cardParent.visible ? stationImageSource : ""
                     corners.bottomLeftRadius: Kirigami.Units.cornerRadius
                     corners.topLeftRadius: Kirigami.Units.cornerRadius
                     border.width: 1
@@ -82,11 +84,17 @@ Item {
 
                     Kirigami.Separator {
                         Layout.fillWidth: true
-                        visible: !stationIsLocal && (countryLabel.visible || tagsLabel.visible)
+                        visible: stationIsLocal || (!stationIsLocal && (stationCountry || stationTags))
+                    }
+
+                    Controls.Label {
+                        visible: stationIsLocal
+                        text: "Local Station"
+                        antialiasing: true
                     }
 
                     RowLayout {
-                        visible: !stationIsLocal && (countryLabel.visible || tagsLabel.visible)
+                        visible: !stationIsLocal
                         Controls.Label {
                             id: countryLabel
                             visible:  text.length > 0
@@ -111,11 +119,11 @@ Item {
                     }
                 }
 
-                Controls.Button {
+                /*Controls.Button {
                     text: i18n("Local Station")
                     display: Controls.Button.IconOnly
                     Layout.rightMargin: Kirigami.Units.largeSpacing + Kirigami.Units.smallSpacing
-                    visible: stationIsLocal
+                    visible: !stationIsLocal
                     Controls.ToolTip.visible: hovered
                     Controls.ToolTip.text: text
                     background: Item {
@@ -130,7 +138,7 @@ Item {
                             anchors.centerIn: parent
                         }
                     }
-                }
+                }*/
 
                 Controls.Button {
                     id: playButton
@@ -142,8 +150,8 @@ Item {
                     width: Kirigami.Units.iconSizes.medium
                     z: 1000
                     onClicked: {
-                        gridView.currentIndex = model.index;
-                        transistorMainWindow.currentModel.switchToStationByIndex(gridView.currentIndex);
+                        view.currentIndex = model.index;
+                        transistorMainWindow.currentModel.switchToStationByIndex(view.currentIndex);
                         if(cardParent.stationSource !== "") {
                         AudioPlayer.play(cardParent.stationSource);
                         }
@@ -198,7 +206,7 @@ Item {
         property real originalY: 0
 
         onClicked: {
-            gridView.currentIndex = model.index;
+            view.currentIndex = model.index;
             if (pageStack.depth > 1)
                 pageStack.pop();
             pageStack.push(Qt.resolvedUrl("StationInfoPage.qml"), {
@@ -224,19 +232,25 @@ Item {
         onPositionChanged: function (mouse) {
             if (held) {
                 // Получаем позицию мыши относительно GridView
-                var mousePos = mapToItem(gridView.contentItem, mouse.x, mouse.y);
+                var mousePos = mapToItem(view.contentItem, mouse.x, mouse.y);
 
-                // Вычисляем приблизительную позицию по колонкам
-                var cellWidth = gridView.cellWidth;
-                var approximateColumn = Math.floor(mousePos.x / gridView.cellWidth);
-                var approximateRow = Math.floor(mousePos.y / gridView.cellHeight);
+                var dropIndex;
+                if (view.cellWidth) { // GridView
+                    // Вычисляем приблизительную позицию по колонкам
+                    var cellWidth = view.cellWidth;
+                    var approximateColumn = Math.floor(mousePos.x / cellWidth);
+                    var approximateRow = Math.floor(mousePos.y / view.cellHeight);
 
-                // Вычисляем предполагаемый индекс на основе количества колонок
-                var columnsPerRow = Math.floor(gridView.width / cellWidth);
-                var dropIndex = (approximateRow * columnsPerRow) + approximateColumn;
+                    // Вычисляем предполагаемый индекс на основе количества колонок
+                    var columnsPerRow = Math.floor(view.width / cellWidth);
+                    dropIndex = (approximateRow * columnsPerRow) + approximateColumn;
+                } else { // ListView
+                    var approximateRow = Math.floor(mousePos.y / height);
+                    dropIndex = approximateRow;
+                }
 
                 // Ограничиваем индекс размером модели
-                dropIndex = Math.min(dropIndex, gridView.count - 1);
+                dropIndex = Math.min(dropIndex, view.count - 1);
                 dropIndex = Math.max(0, dropIndex);
 
                 // Если позиция изменилась, перемещаем визуально
@@ -255,15 +269,21 @@ Item {
                 held = false;
 
                 // Получаем финальную позицию мыши
-                var mousePos = mapToItem(gridView.contentItem, mouse.x, mouse.y);
+                var mousePos = mapToItem(view.contentItem, mouse.x, mouse.y);
 
                 // Вычисляем финальный индекс
-                var cellWidth = gridView.cellWidth;
-                var approximateColumn = Math.floor(mousePos.x / cellWidth);
-                var approximateRow = Math.floor(mousePos.y / gridView.cellHeight);
-                var columnsPerRow = Math.floor(gridView.width / cellWidth);
-                var finalDropIndex = (approximateRow * columnsPerRow) + approximateColumn;
-                finalDropIndex = Math.min(finalDropIndex, gridView.count - 1);
+                var finalDropIndex;
+                if (view.cellWidth) { // GridView
+                    var cellWidth = view.cellWidth;
+                    var approximateColumn = Math.floor(mousePos.x / cellWidth);
+                    var approximateRow = Math.floor(mousePos.y / view.cellHeight);
+                    var columnsPerRow = Math.floor(view.width / cellWidth);
+                    finalDropIndex = (approximateRow * columnsPerRow) + approximateColumn;
+                } else { // ListView
+                    var approximateRow = Math.floor(mousePos.y / height);
+                    finalDropIndex = approximateRow;
+                }
+                finalDropIndex = Math.min(finalDropIndex, view.count - 1);
                 finalDropIndex = Math.max(0, finalDropIndex);
 
                 // Если начальная и конечная позиции различаются
@@ -284,7 +304,7 @@ Item {
                     }
                 }
 
-                if (currentDropIndex == 0 && gridView.columns == 1 && currentModel == StationDBModel) {
+                if (currentDropIndex == 0 && (view.columns || 1) == 1 && currentModel == StationDBModel) {
                     //fix for missing coordinates
                     currentModel.loadStations();
                 }
@@ -295,7 +315,7 @@ Item {
             target: held ? cardParent : undefined
             axis: Drag.XAndYAxis
             minimumX: 0
-            maximumX: gridView.width - cardParent.width
+            maximumX: view.width - cardParent.width
             minimumY: 0
             filterChildren: true
         }

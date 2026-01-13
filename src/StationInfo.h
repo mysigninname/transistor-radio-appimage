@@ -1,3 +1,8 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
 #ifndef StationInfo_H
 #define StationInfo_H
 
@@ -26,6 +31,8 @@ class StationInfo : public QObject
 
 public:
     explicit StationInfo(QObject *parent = nullptr);
+
+    static StationInfo *createFromData(const QVariantMap &data, QObject *parent = nullptr, int songIndex = -1);
 
     int songIndex() const;
     void setSongIndex(int newSongIndex);

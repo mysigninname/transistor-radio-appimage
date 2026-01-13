@@ -4,7 +4,7 @@ import QtQuick.Layouts
 
 import org.kde.kirigami as Kirigami
 
-import org.kde.transistor
+import ru.transistor_radio.transistor
 
 Kirigami.OverlayDrawer {
     id: root
@@ -42,18 +42,11 @@ Kirigami.OverlayDrawer {
                 topPadding: Kirigami.Units.smallSpacing
                 bottomPadding: Kirigami.Units.smallSpacing
 
-                /*contentItem: Kirigami.SearchField {
-                    id: search
-                    autoAccept: false
-                    onAccepted: {
-                        var pageObject = Qt.createComponent("org.kde.transistor", "SearchPage");
-                        pageStack.clear();
-                        pageStack.layers.clear();
-                        pageStack.push(pageObject, {initialSearch: search.text});
-                        //currentPage = "SearchPage";
-                        search.text = "";
-                    }
-                }*/
+                contentItem: Kirigami.Heading {
+                    text: i18n("Menu")
+                    verticalAlignment: Qt.AlignVCenter
+                    leftPadding: Kirigami.Units.largeSpacing
+                }
             }
 
             Controls.ScrollView {
