@@ -25,3 +25,7 @@ sudo ninja install
 
 This project is licensed under GPL-3.0-or-later.
 
+## Project website
+
+[transistor-radio.ru](https://transistor-radio.ru)
+
