@@ -20,7 +20,7 @@ KirigamiSettings.ConfigurationView {
             category: i18nc("@title:group", "About")
             initialProperties: () => {
            return {
-               donateUrl: "https://yoomoney.ru/fundraise/1CUG0Q1I6HP.250922",
+               donateUrl: "https://transistor-radio.ru/#donate",
                getInvolvedUrl: "https://invent.kde.org/saurov/transistor"
            };
        }
