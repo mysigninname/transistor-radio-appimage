@@ -66,11 +66,13 @@ pages:
   tags:
     - kde-sdk
   dependencies:
-    - publish-repo
+    - publish-repo   # <- критично, чтобы получить public/
   script:
     - echo "Deploying Pages..."
   artifacts:
     paths:
-      - public
+      - public        # <- обязательно, Pages берёт только это
+    expire_in: 1 week
   only:
-    - master  # или main, ветка из которой публикуем
+    - master          # или main
+
