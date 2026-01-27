@@ -33,7 +33,7 @@ build-flatpak:
       - $BUILD_DIR
   tags:
     - LargeVM # тег runner, указывающий на self-hosted runner с host SDK
-    -  amd64
+    - amd64
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
 # --------------------------
@@ -61,7 +61,7 @@ publish-repo:
     - main
   tags:
     - LargeVM
-    -  amd64
+    - amd64
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -80,4 +80,4 @@ pages:
     - main
   tags:
     - LargeVM
-    -  amd64
+    - amd64
