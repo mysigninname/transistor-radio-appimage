@@ -10,13 +10,12 @@ variables:
   PAGES_URL: https://saurov.local-kde.org/transistor
 
 # ------------------------------
-# Job: сборка Flatpak
+# Stage 1: сборка Flatpak
 # ------------------------------
 build-flatpak:
   stage: build
   tags:
-    - kde-sdk          # замените на тег вашего runner
-  image: registry.gitlab.com/freedesktop-sdk/docker-images/kde-sdk:6.9
+    - kde-sdk
   script:
     - echo "Создание build директории..."
     - rm -rf $BUILD_DIR
@@ -27,14 +26,14 @@ build-flatpak:
       - $BUILD_DIR
 
 # ------------------------------
-# Job: публикация OSTree репозитория в Pages
+# Stage 2: публикация OSTree репозитория
 # ------------------------------
 publish-repo:
   stage: publish
   tags:
     - kde-sdk
   dependencies:
-    - build-flatpak
+    - build-flatpak   # строго зависит от build-flatpak
   script:
     - echo "Создание OSTree репозитория..."
     - mkdir -p $OSTREE_REPO
@@ -46,7 +45,7 @@ publish-repo:
     - mkdir -p public/repo
     - cp -r $OSTREE_REPO/* public/repo/
 
-    - echo "Генерация .flatpakrepo для Pages..."
+    - echo "Генерация .flatpakrepo..."
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
@@ -57,21 +56,20 @@ publish-repo:
   artifacts:
     paths:
       - public
-    expire_in: 1 week
 
 # ------------------------------
-# Job: Pages deployment
+# Stage 3: деплой на Pages
 # ------------------------------
 pages:
   stage: publish
   tags:
     - kde-sdk
   dependencies:
-    - publish-repo
+    - publish-repo   # строго зависит от publish-repo
   script:
     - echo "Deploying Pages..."
   artifacts:
     paths:
       - public
   only:
-    - master  # или main
+    - master   # или main
