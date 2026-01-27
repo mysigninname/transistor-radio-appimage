@@ -1,27 +1,23 @@
-# .gitlab-ci.yml
-# CI/CD для сборки Flatpak Transistor на host runner (shell executor) и публикации через Pages
-
 stages:
   - build
   - publish
-  - pages
 
 variables:
-  BUILD_DIR: build-dir
-  OSTREE_REPO: flatpak-repo/repo
   APP_ID: ru.transistor_radio.transistor
   APP_NAME: Transistor
-  PAGES_URL: "https://invent.kde.org/saurov/transistor/-/raw/main/flatpak-repo/repo"
+  BUILD_DIR: build
+  OSTREE_REPO: ostree-repo
+  PAGES_URL: https://saurov.pages.kde.org/transistor
 
-# --------------------------
-# 1️⃣ Сборка Flatpak
-# --------------------------
+# ------------------------------
+# Job: сборка Flatpak
+# ------------------------------
 build-flatpak:
   stage: build
   tags:
-    - kde-sdk   # тег для host runner
+    - kde-sdk  # тег вашего runner
   script:
-    - echo "Сборка Flatpak..."
+    - echo "Создание build директории..."
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
     - flatpak-builder --force-clean $BUILD_DIR .flatpak-manifest.json
@@ -29,9 +25,9 @@ build-flatpak:
     paths:
       - $BUILD_DIR
 
-# --------------------------
-# 2️⃣ Создание репозитория и .flatpakrepo
-# --------------------------
+# ------------------------------
+# Job: публикация OSTree репозитория в Pages
+# ------------------------------
 publish-repo:
   stage: publish
   tags:
@@ -45,9 +41,12 @@ publish-repo:
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
 
+    - echo "Копирование репозитория в Pages..."
+    - mkdir -p public/repo
+    - cp -r $OSTREE_REPO/* public/repo/
+
     - echo "Генерация .flatpakrepo для Pages..."
     - mkdir -p public
-    - cp -r $OSTREE_REPO public/repo
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
     - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakrepo
@@ -57,18 +56,21 @@ publish-repo:
   artifacts:
     paths:
       - public
+    expire_in: 1 week
 
-# --------------------------
-# 3️⃣ Публикация на Pages
-# --------------------------
+# ------------------------------
+# Job: Pages deployment
+# ------------------------------
 pages:
-  stage: pages
+  stage: publish
   tags:
     - kde-sdk
   dependencies:
     - publish-repo
   script:
-    - echo "Подготовка артефактов для Pages..."
+    - echo "Deploying Pages..."
   artifacts:
     paths:
       - public
+  only:
+    - master  # или main, ветка из которой публикуем
