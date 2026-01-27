@@ -24,7 +24,7 @@ build-flatpak:
     - echo "Сборка Flatpak..."
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
-    - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
+    - flatpak-builder --force-clean $BUILD_DIR .flatpak-manifest.json
   artifacts:
     paths:
       - $BUILD_DIR
