@@ -1,0 +1,78 @@
+# .gitlab-ci.yml
+# CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org Pages
+
+image: registry.gitlab.com/freedesktop-sdk/docker-images/kde-sdk:6.9
+
+stages:
+  - build
+  - publish
+  - pages
+
+variables:
+  BUILD_DIR: build-dir
+  OSTREE_REPO: flatpak-repo/repo
+  APP_ID: ru.transistor_radio.transistor
+  APP_NAME: Transistor
+  PAGES_URL: "https://invent.kde.org/saurov/transistor/-/raw/main/flatpak-repo/repo"
+
+before_script:
+  - flatpak --version
+  - mkdir -p $BUILD_DIR
+  - mkdir -p $OSTREE_REPO
+
+# --------------------------
+# 1️⃣ Сборка Flatpak
+# --------------------------
+build-flatpak:
+  stage: build
+  script:
+    # Сборка приложения
+    - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
+    # Проверяем, что .desktop, metainfo и icon на месте
+    - ls $BUILD_DIR/share/applications/
+    - ls $BUILD_DIR/share/metainfo/
+    - ls $BUILD_DIR/share/icons/hicolor/scalable/apps/
+  artifacts:
+    paths:
+      - $BUILD_DIR
+
+# --------------------------
+# 2️⃣ Создание репозитория и .flatpakrepo
+# --------------------------
+publish-repo:
+  stage: publish
+  dependencies:
+    - build-flatpak
+  script:
+    # Инициализация ostree репозитория
+    - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
+    # Экспорт сборки
+    - flatpak build-export $OSTREE_REPO $BUILD_DIR
+    - flatpak build-update-repo $OSTREE_REPO
+    # Создание .flatpakrepo
+    - mkdir -p public
+    - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
+    - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
+    - echo "Url=$PAGES_URL" >> public/$APP_ID.flatpakrepo
+    - echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakrepo
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+
+# --------------------------
+# 3️⃣ Публикация на invent.kde.org Pages
+# --------------------------
+pages:
+  stage: pages
+  dependencies:
+    - publish-repo
+  script:
+    # GitLab Pages ожидает папку public/
+    - mv public public_pages
+  artifacts:
+    paths:
+      - public_pages
+  only:
+    - main
