@@ -15,7 +15,8 @@ variables:
 build-flatpak:
   stage: build
   tags:
-    - kde-sdk  # тег вашего runner
+    - kde-sdk          # замените на тег вашего runner
+  image: registry.gitlab.com/freedesktop-sdk/docker-images/kde-sdk:6.9
   script:
     - echo "Создание build директории..."
     - rm -rf $BUILD_DIR
@@ -66,13 +67,11 @@ pages:
   tags:
     - kde-sdk
   dependencies:
-    - publish-repo   # <- критично, чтобы получить public/
+    - publish-repo
   script:
     - echo "Deploying Pages..."
   artifacts:
     paths:
-      - public        # <- обязательно, Pages берёт только это
-    expire_in: 1 week
+      - public
   only:
-    - master          # или main
-
+    - master  # или main
