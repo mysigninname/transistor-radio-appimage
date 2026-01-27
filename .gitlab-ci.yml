@@ -10,6 +10,7 @@ variables:
   OSTREE_REPO: ostree-repo
   PAGES_URL: https://saurov.local-kde.org/transistor
   GPG_KEY_ID: A848845C4A4919DFF5F7235AC3187031755F7D54
+  GPG_PUBLIC_FILE: public-key.gpg
 
 # ------------------------------
 # Stage 1: сборка Flatpak
@@ -46,14 +47,15 @@ publish-repo:
     - echo "Копирование репозитория в Pages..."
     - mkdir -p public/repo
     - cp -r $OSTREE_REPO/* public/repo/
-
+    - echo "Экспорт публичного GPG ключа для Flatpak..."
+    - gpg --armor --export $GPG_KEY_ID > public/$GPG_PUBLIC_FILE
     - echo "Генерация .flatpakrepo..."
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
     - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakrepo
     - echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakrepo
-    - echo "GPGKey=$PAGES_URL/public-key.gpg" >> public/$APP_ID.flatpakrepo
+    - echo "GPGKey=$PAGES_URL/$GPG_PUBLIC_FILE" >> public/$APP_ID.flatpakrepo
 
   artifacts:
     paths:
