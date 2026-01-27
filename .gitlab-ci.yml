@@ -32,7 +32,7 @@ build-flatpak:
     paths:
       - $BUILD_DIR
   tags:
-    - amd64 # тег runner, указывающий на self-hosted runner с host SDK
+    - Linux # тег runner, указывающий на self-hosted runner с host SDK
 
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
@@ -60,7 +60,7 @@ publish-repo:
   only:
     - main
   tags:
-    - amd64
+    - Linux
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -78,4 +78,4 @@ pages:
   only:
     - main
   tags:
-    - amd64
+    - Linux
