@@ -23,7 +23,7 @@ build-flatpak:
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
     # Собираем приложение через flatpak-builder
-    - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
+    - flatpak-builder --force-clean $BUILD_DIR .flatpak-manifest.json
     # Проверяем, что .desktop, metainfo и icon на месте
     - ls $BUILD_DIR/share/applications/
     - ls $BUILD_DIR/share/metainfo/
