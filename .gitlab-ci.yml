@@ -1,7 +1,5 @@
 # .gitlab-ci.yml
-# CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org Pages
-
-image: kdeci/kde-sdk:6.9
+# CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org (host SDK)
 
 stages:
   - build
@@ -15,18 +13,16 @@ variables:
   APP_NAME: Transistor
   PAGES_URL: "https://invent.kde.org/saurov/transistor/-/raw/main/flatpak-repo/repo"
 
-before_script:
-  - flatpak --version
-  - mkdir -p $BUILD_DIR
-  - mkdir -p $OSTREE_REPO
-
 # --------------------------
 # 1️⃣ Сборка Flatpak
 # --------------------------
 build-flatpak:
   stage: build
   script:
-    # Сборка приложения
+    # Чистим старую сборку
+    - rm -rf $BUILD_DIR
+    - mkdir -p $BUILD_DIR
+    # Собираем приложение через flatpak-builder
     - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
     # Проверяем, что .desktop, metainfo и icon на месте
     - ls $BUILD_DIR/share/applications/
@@ -45,8 +41,9 @@ publish-repo:
     - build-flatpak
   script:
     # Инициализация ostree репозитория
+    - mkdir -p $OSTREE_REPO
     - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
-    # Экспорт сборки
+    # Экспортируем сборку в ostree репозиторий
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
     # Создание .flatpakrepo
