@@ -1,5 +1,5 @@
 # .gitlab-ci.yml
-# CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org (host SDK)
+# CI/CD для сборки Flatpak Transistor на host runner (shell executor) и публикации через Pages
 
 stages:
   - build
@@ -18,32 +18,33 @@ variables:
 # --------------------------
 build-flatpak:
   stage: build
+  tags:
+    - kde-sdk   # тег для host runner
   script:
-    # Чистим старую сборку
+    - echo "Сборка Flatpak..."
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
-    # Собираем приложение через flatpak-builder
-    - flatpak-builder --force-clean $BUILD_DIR .flatpak-manifest.json
+    - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
   artifacts:
     paths:
       - $BUILD_DIR
-  tags:
-    - kde-sdk # тег runner, указывающий на self-hosted runner с host SDK
+
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
 # --------------------------
 publish-repo:
   stage: publish
+  tags:
+    - kde-sdk
   dependencies:
     - build-flatpak
   script:
-    # Инициализация ostree репозитория
+    - echo "Создание OSTree репозитория..."
     - mkdir -p $OSTREE_REPO
     - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
-    # Экспортируем сборку в ostree репозиторий
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
-    # Создание .flatpakrepo для пользователей
+    - echo "Генерация .flatpakrepo для Pages..."
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
@@ -52,25 +53,19 @@ publish-repo:
   artifacts:
     paths:
       - public
-  only:
-    - main
-  tags:
-    - kde-sdk
 
 # --------------------------
-# 3️⃣ Публикация на invent.kde.org Pages
+# 3️⃣ Публикация на Pages
 # --------------------------
 pages:
   stage: pages
+  tags:
+    - kde-sdk
   dependencies:
     - publish-repo
   script:
-    # GitLab Pages ожидает папку public/
+    - echo "Подготовка артефактов для Pages..."
     - mv public public_pages
   artifacts:
     paths:
       - public_pages
-  only:
-    - main
-  tags:
-    - kde-sdk
