@@ -1,7 +1,7 @@
 # .gitlab-ci.yml
 # CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org Pages
 
-image: registry.gitlab.com/freedesktop-sdk/docker-images/kde-sdk:6.9
+image: kdeci/kde-sdk:6.9
 
 stages:
   - build
