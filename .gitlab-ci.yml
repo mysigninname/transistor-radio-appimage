@@ -65,7 +65,6 @@ pages:
     - publish-repo
   script:
     - echo "Подготовка артефактов для Pages..."
-    - mv public public_pages
   artifacts:
     paths:
-      - public_pages
+      - public
