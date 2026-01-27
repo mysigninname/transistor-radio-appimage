@@ -19,6 +19,8 @@ variables:
 build-flatpak:
   stage: build
   script:
+    - sudo zypper refresh
+    - sudo zypper install -y flatpak flatpak-builder
     # Чистим старую сборку
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
@@ -32,7 +34,7 @@ build-flatpak:
     paths:
       - $BUILD_DIR
   tags:
-    - kde-sdk # тег runner, указывающий на self-hosted runner с host SDK
+    - Linux # тег runner, указывающий на self-hosted runner с host SDK
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
 # --------------------------
@@ -59,7 +61,7 @@ publish-repo:
   only:
     - main
   tags:
-    - kde-sdk
+    - Linux
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -77,4 +79,4 @@ pages:
   only:
     - main
   tags:
-    - kde-sdk
+    - Linux
