@@ -31,6 +31,8 @@ build-flatpak:
   artifacts:
     paths:
       - $BUILD_DIR
+  tags:
+    - host-sdk # тег runner, указывающий на self-hosted runner с host SDK
 
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
@@ -46,7 +48,7 @@ publish-repo:
     # Экспортируем сборку в ostree репозиторий
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
-    # Создание .flatpakrepo
+    # Создание .flatpakrepo для пользователей
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
@@ -57,6 +59,8 @@ publish-repo:
       - public
   only:
     - main
+  tags:
+    - host-sdk
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -73,3 +77,5 @@ pages:
       - public_pages
   only:
     - main
+  tags:
+    - host-sdk
