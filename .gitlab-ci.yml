@@ -56,14 +56,14 @@ publish-repo:
     - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakrepo
     - echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakrepo
     # - echo "GPGVerify=false" >> public/$APP_ID.flatpakrepo
-    - echo "[Application]" > public/$APP_ID.flatpakref
-    - echo "Name=$APP_NAME" >> public/$APP_ID.flatpakref
-    - echo "Id=$APP_ID" >> public/$APP_ID.flatpakref
+    - echo "[Flatpak Ref]" > public/$APP_ID.flatpakref
+    - echo "Name=$APP_ID" >> public/$APP_ID.flatpakref
+    #- echo "Id=$APP_ID" >> public/$APP_ID.flatpakref
     - echo "Runtime=org.kde.Platform/x86_64/6.9" >> public/$APP_ID.flatpakref
     - echo "Sdk=org.kde.Sdk/x86_64/6.9" >> public/$APP_ID.flatpakref
     - echo "Branch=stable" >> public/$APP_ID.flatpakref
     - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakref
-    - echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakref
+    #- echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakref
     #- echo "GPGKey=$PAGES_URL/public-key.gpg" >> public/$APP_ID.flatpakref
 
 
