@@ -1,6 +1,7 @@
 stages:
   - build
   - publish
+  - pages
 
 variables:
   APP_ID: ru.transistor_radio.transistor
@@ -61,7 +62,7 @@ publish-repo:
 # Stage 3: деплой на Pages
 # ------------------------------
 pages:
-  stage: publish
+  stage: pages
   tags:
     - kde-sdk
   dependencies:
