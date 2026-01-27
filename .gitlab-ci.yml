@@ -32,7 +32,7 @@ build-flatpak:
     paths:
       - $BUILD_DIR
   tags:
-    - Linux # тег runner, указывающий на self-hosted runner с host SDK
+    - kde-sdk # тег runner, указывающий на self-hosted runner с host SDK
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
 # --------------------------
@@ -59,7 +59,7 @@ publish-repo:
   only:
     - main
   tags:
-    - Linux
+    - kde-sdk
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -77,4 +77,4 @@ pages:
   only:
     - main
   tags:
-    - Linux
+    - kde-sdk
