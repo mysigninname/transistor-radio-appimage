@@ -27,7 +27,7 @@
     <category>Music</category>
   </categories>
   <releases>
-    <release version="1.0.0" date="2024-01-01">
+    <release version="1.3.0" date="2026-01-01">
       <description>
         <p>Initial release of Transistor, an internet radio player with access to over 50,000 stations.</p>
       </description>
