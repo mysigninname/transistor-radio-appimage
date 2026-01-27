@@ -19,8 +19,6 @@ variables:
 build-flatpak:
   stage: build
   script:
-    - zypper refresh
-    - zypper install -y flatpak flatpak-builder
     # Чистим старую сборку
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
@@ -34,7 +32,7 @@ build-flatpak:
     paths:
       - $BUILD_DIR
   tags:
-    - Linux # тег runner, указывающий на self-hosted runner с host SDK
+    - LargeVM amd64 # тег runner, указывающий на self-hosted runner с host SDK
 
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
@@ -62,7 +60,7 @@ publish-repo:
   only:
     - main
   tags:
-    - Linux
+    - LargeVM amd64
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -80,4 +78,4 @@ pages:
   only:
     - main
   tags:
-    - Linux
+    - LargeVM amd64
