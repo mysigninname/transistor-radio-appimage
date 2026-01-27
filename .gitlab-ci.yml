@@ -47,6 +47,7 @@ publish-repo:
 
     - echo "Генерация .flatpakrepo для Pages..."
     - mkdir -p public
+    - cp -r $OSTREE_REPO public/repo
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
     - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakrepo
