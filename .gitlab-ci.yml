@@ -32,7 +32,7 @@ build-flatpak:
     paths:
       - $BUILD_DIR
   tags:
-    - docker-runner # тег runner, указывающий на self-hosted runner с host SDK
+    - VM # тег runner, указывающий на self-hosted runner с host SDK
 
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
