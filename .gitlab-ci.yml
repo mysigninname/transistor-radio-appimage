@@ -7,7 +7,7 @@ variables:
   APP_NAME: Transistor
   BUILD_DIR: build
   OSTREE_REPO: ostree-repo
-  PAGES_URL: https://saurov.pages.kde.org/transistor
+  PAGES_URL: https://saurov.local-kde.org/transistor
 
 # ------------------------------
 # Job: сборка Flatpak
