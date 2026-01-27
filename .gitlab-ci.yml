@@ -44,12 +44,15 @@ publish-repo:
     - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
+
     - echo "Генерация .flatpakrepo для Pages..."
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
-    - echo "Url=$PAGES_URL" >> public/$APP_ID.flatpakrepo
+    - echo "Url=$PAGES_URL/repo" >> public/$APP_ID.flatpakrepo
     - echo "Homepage=https://invent.kde.org/saurov/transistor" >> public/$APP_ID.flatpakrepo
+    - echo "GPGVerify=false" >> public/$APP_ID.flatpakrepo
+
   artifacts:
     paths:
       - public
