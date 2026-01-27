@@ -19,8 +19,8 @@ variables:
 build-flatpak:
   stage: build
   script:
-    - sudo zypper refresh
-    - sudo zypper install -y flatpak flatpak-builder
+    - zypper refresh
+    - zypper install -y flatpak flatpak-builder
     # Чистим старую сборку
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
