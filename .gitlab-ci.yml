@@ -42,7 +42,7 @@ publish-repo:
     - mkdir -p $OSTREE_REPO
     - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
-    - flatpak build-update-repo $OSTREE_REPO --gpg-sign=$GPG_KEY_ID
+    - flatpak build-update-repo $OSTREE_REPO
 
     - echo "Копирование репозитория в Pages..."
     - mkdir -p public/repo
