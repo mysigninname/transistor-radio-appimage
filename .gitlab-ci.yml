@@ -1,5 +1,5 @@
 # .gitlab-ci.yml
-# CI/CD для сборки и публикации Flatpak Transistor на invent.kde.org (host SDK)
+# CI/CD для сборки и публикации Flatpak Transistor на host runner (shell executor)
 
 stages:
   - build
@@ -13,26 +13,31 @@ variables:
   APP_NAME: Transistor
   PAGES_URL: "https://invent.kde.org/saurov/transistor/-/raw/main/flatpak-repo/repo"
 
+before_script:
+  # Проверяем, что на host установлены необходимые инструменты
+  - flatpak-builder --version || echo "Установите flatpak-builder на runner"
+  - cmake --version || echo "Установите cmake на runner"
+  - ninja --version || echo "Установите ninja на runner"
+  - which qmake || echo "Установите Qt6 на runner"
+  - which kirigami || echo "Установите KF6/Kirigami dev libs на runner"
+
 # --------------------------
 # 1️⃣ Сборка Flatpak
 # --------------------------
 build-flatpak:
   stage: build
   script:
-    # Чистим старую сборку
     - rm -rf $BUILD_DIR
     - mkdir -p $BUILD_DIR
-    # Собираем приложение через flatpak-builder
     - flatpak-builder --force-clean $BUILD_DIR $APP_ID.json
-    # Проверяем, что .desktop, metainfo и icon на месте
     - ls $BUILD_DIR/share/applications/
     - ls $BUILD_DIR/share/metainfo/
     - ls $BUILD_DIR/share/icons/hicolor/scalable/apps/
   artifacts:
     paths:
       - $BUILD_DIR
-  tags:
-    - amd64 # тег runner, указывающий на self-hosted runner с host SDK
+  only:
+    - main
 
 # --------------------------
 # 2️⃣ Создание репозитория и .flatpakrepo
@@ -42,13 +47,10 @@ publish-repo:
   dependencies:
     - build-flatpak
   script:
-    # Инициализация ostree репозитория
     - mkdir -p $OSTREE_REPO
     - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
-    # Экспортируем сборку в ostree репозиторий
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
     - flatpak build-update-repo $OSTREE_REPO
-    # Создание .flatpakrepo для пользователей
     - mkdir -p public
     - echo "[Flatpak Repo]" > public/$APP_ID.flatpakrepo
     - echo "Title=$APP_NAME" >> public/$APP_ID.flatpakrepo
@@ -59,8 +61,6 @@ publish-repo:
       - public
   only:
     - main
-  tags:
-    - host-sdk
 
 # --------------------------
 # 3️⃣ Публикация на invent.kde.org Pages
@@ -70,12 +70,9 @@ pages:
   dependencies:
     - publish-repo
   script:
-    # GitLab Pages ожидает папку public/
     - mv public public_pages
   artifacts:
     paths:
       - public_pages
   only:
     - main
-  tags:
-    - host-sdk
