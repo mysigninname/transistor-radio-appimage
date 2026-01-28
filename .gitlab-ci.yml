@@ -48,7 +48,7 @@ publish-repo:
     - echo "allow-preset-passphrase" >> ~/.gnupg/gpg-agent.conf
     - gpg-connect-agent reloadagent /bye
     - gpg --import --batch "$GPG_PRIVATE_KEY"
-    - echo "$GPG_PASSPHRASE" | gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
+    - echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
 
     # ---- Подписание репозитория и summary ----
     - flatpak build-update-repo $OSTREE_REPO \
