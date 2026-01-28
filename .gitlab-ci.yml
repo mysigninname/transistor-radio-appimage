@@ -71,9 +71,14 @@ publish-repo:
     - |
       cat > public/$APP_ID.flatpakref <<EOF
       [Flatpak Ref]
-      Name=$APP_ID
+      Name=ru.transistor_radio.transistor
+      Title=Transistor
+      Comment=Internet Radio Player
+      Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
       Branch=master
-      Url=$PAGES_URL
+      RuntimeRepo=https://saurov.local-kde.org/transistor/ru.transistor_radio.transistor.flatpakrepo
+      IsRuntime=false
+      Url=https://invent.kde.org/saurov/transistor/
       GPGVerify=true
       EOF
 
