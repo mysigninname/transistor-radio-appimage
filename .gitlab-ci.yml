@@ -38,36 +38,33 @@ publish-repo:
   script:
     - echo "Создание OSTree репозитория..."
     - mkdir -p $OSTREE_REPO
-    - ostree init --repo=$OSTREE_REPO --mode=archive-z2
+    - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
     # Включаем проверку GPG в config репозитория
-    - ostree config --repo=$OSTREE_REPO set core.gpg-verify true
-    - ostree config --repo=$OSTREE_REPO set core.gpg-verify-summary true
+    #- ostree config --repo=$OSTREE_REPO set core.gpg-verify true
+    #- ostree config --repo=$OSTREE_REPO set core.gpg-verify-summary true
 
     # Импортируем ключ (без пароля)
-    - mkdir -p ~/.gnupg
-    - gpg --import --batch "$GPG_PRIVATE_KEY"
+    #- mkdir -p ~/.gnupg
+    #- gpg --import --batch "$GPG_PRIVATE_KEY"
     # Экспорт сборки
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
 
     - flatpak build-update-repo $OSTREE_REPO \
-        --gpg-sign="$GPG_KEY_ID" \
-        --generate-static-deltas \
-        --gpg-sign-summary
+        --generate-static-deltas
 
     # ---- Копирование для Pages ----
     - mkdir -p public/repo
     - cp -r $OSTREE_REPO/* public/repo/
 
     # ---- flatpakrepo ----
-    - GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" | sed -e '/^-----BEGIN/d' -e '/^-----END/d' -e '/^=/d' | tr -d '\n')
+    #- GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" | sed -e '/^-----BEGIN/d' -e '/^-----END/d' -e '/^=/d' | tr -d '\n')
     - |
       cat > public/$APP_ID.flatpakrepo <<EOF
       [Flatpak Repo]
       Title=$APP_NAME
       Url=$PAGES_URL/repo
-      Homepage=https://invent.kde.org/saurov/transistor
-      GPGKey=$GPG_KEY_INLINE
-      GPGVerify=true
+      Homepage=https://invent.kde.org/saurov/transistor/
+      GPGVerify=false
       EOF
 
     # ---- flatpakref ----
@@ -79,10 +76,10 @@ publish-repo:
       Comment=Internet Radio Player
       Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
       Branch=master
-      RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
+      RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo/
       IsRuntime=false
       Url=https://invent.kde.org/saurov/transistor/
-      GPGVerify=true
+      GPGVerify=false
       EOF
 
   artifacts:
