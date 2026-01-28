@@ -55,7 +55,8 @@ publish-repo:
 
     - flatpak build-update-repo "$OSTREE_REPO" \
         --gpg-sign="$GPG_KEY_ID" \
-        --generate-static-deltas
+        --generate-static-deltas \
+        --gpg-verify-summary
 
     - echo "Копирование репозитория в Pages..."
     - mkdir -p public/repo
