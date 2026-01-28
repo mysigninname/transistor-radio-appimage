@@ -38,16 +38,17 @@ publish-repo:
   script:
     - echo "Создание OSTree репозитория..."
     - mkdir -p $OSTREE_REPO
-    - ostree init --repo=$OSTREE_REPO --mode=archive-z2 --gpg-sign="$GPG_KEY_ID"
+    - ostree init --repo=$OSTREE_REPO --mode=archive-z2
+    # Включаем проверку GPG в config репозитория
+    - ostree config --repo=$OSTREE_REPO set core.gpg-verify true
+    - ostree config --repo=$OSTREE_REPO set core.gpg-verify-summary true
+
+    # Импортируем ключ (без пароля)
+    - mkdir -p ~/.gnupg
     - gpg --import --batch "$GPG_PRIVATE_KEY"
     # Экспорт сборки
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
 
-    # ---- GPG setup ----
-    
-    #- echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
-
-    # ---- Подписание репозитория и summary ----
     - flatpak build-update-repo $OSTREE_REPO \
         --gpg-sign="$GPG_KEY_ID" \
         --generate-static-deltas \
