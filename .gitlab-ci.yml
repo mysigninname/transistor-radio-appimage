@@ -76,8 +76,6 @@ publish-repo:
       Url=$PAGES_URL/repo
       Homepage=https://invent.kde.org/saurov/transistor
       GPGKey=$GPG_KEY_INLINE
-      GPGVerify=true
-      GPGVerifySummary=false
       EOF
 
     # ---- flatpakref ----
