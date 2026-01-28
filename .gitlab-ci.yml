@@ -47,10 +47,13 @@ publish-repo:
 
     - gpg --import --batch "$GPG_PRIVATE_KEY"
     # ---- inline GPG public key for flatpakrepo ----
-    - |
-      GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" \
-        | sed '1d;$d' \
+    - GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" | \
+        sed -e '/^-----BEGIN/d' \
+            -e '/^-----END/d' \
+            -e '/^=/d' \
         | tr -d '\n')
+
+
 
     - echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
     - gpg-connect-agent "KEYINFO $GPG_KEY_GRIP" /bye
