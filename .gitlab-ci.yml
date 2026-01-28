@@ -46,6 +46,11 @@ publish-repo:
     - gpg-connect-agent reloadagent /bye
 
     - gpg --import --batch "$GPG_PRIVATE_KEY"
+    # ---- inline GPG public key for flatpakrepo ----
+    - |
+      GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" \
+        | sed '1d;$d' \
+        | tr -d '\n')
 
     - echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
     - gpg-connect-agent "KEYINFO $GPG_KEY_GRIP" /bye
@@ -61,10 +66,11 @@ publish-repo:
     - |
       cat > public/$APP_ID.flatpakrepo <<EOF
       [Flatpak Repo]
+      Name=$APP_ID
       Title=$APP_NAME
-      Url=$PAGES_URL
+      Url=$PAGES_URL/repo
       Homepage=https://invent.kde.org/saurov/transistor
-      GPGVerify=true
+      GPGKey=$GPG_KEY_INLINE
       EOF
 
     # ---- flatpakref ----
