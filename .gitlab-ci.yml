@@ -73,9 +73,10 @@ publish-repo:
       [Flatpak Repo]
       Name=$APP_ID
       Title=$APP_NAME
-      Url=$PAGES_URL/repo
-      Homepage=https://invent.kde.org/saurov/transistor
-      GPGKey=$GPG_KEY_INLINE
+      Url=$PAGES_URL/repo/
+      Homepage=https://invent.kde.org/saurov/transistor/
+      GPGVerify=true
+      GPGVerifySummary=false
       EOF
 
     # ---- flatpakref ----
@@ -90,7 +91,6 @@ publish-repo:
       RuntimeRepo=https://saurov.local-kde.org/transistor/ru.transistor_radio.transistor.flatpakrepo
       IsRuntime=false
       Url=https://invent.kde.org/saurov/transistor/
-      GPGVerify=true
       EOF
 
 
