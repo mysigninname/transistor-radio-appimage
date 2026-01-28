@@ -54,6 +54,7 @@ publish-repo:
     - flatpak build-update-repo $OSTREE_REPO \
         --gpg-sign="$GPG_KEY_ID" \
         --generate-static-deltas \
+        --gpg-sign \
         --gpg-sign-summary
 
     # ---- Копирование для Pages ----
