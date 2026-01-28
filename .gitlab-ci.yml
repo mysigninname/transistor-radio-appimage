@@ -62,6 +62,12 @@ publish-repo:
     - echo "Копирование репозитория в Pages..."
     - mkdir -p public/repo
     - cp -r $OSTREE_REPO/* public/repo/
+
+    - |
+      echo "Exporting public GPG key…"
+      gpg --export --armor "$GPG_KEY_ID" > public/repo-public.key
+      cat public/repo-public.key
+    
     # ---- flatpakrepo ----
     - |
       cat > public/$APP_ID.flatpakrepo <<EOF
