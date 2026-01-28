@@ -56,7 +56,7 @@ publish-repo:
     - flatpak build-update-repo "$OSTREE_REPO" \
         --gpg-sign="$GPG_KEY_ID" \
         --generate-static-deltas \
-        --gpg-verify-summary=false
+        --gpg-verify-summary
 
     - echo "Копирование репозитория в Pages..."
     - mkdir -p public/repo
@@ -75,8 +75,9 @@ publish-repo:
       Title=$APP_NAME
       Url=$PAGES_URL/repo/
       Homepage=https://invent.kde.org/saurov/transistor/
+      GPGKey=$GPG_KEY_INLINE
       GPGVerify=true
-      GPGVerifySummary=false
+      GPGVerifySummary=true
       EOF
 
     # ---- flatpakref ----
