@@ -47,8 +47,8 @@ publish-repo:
 
     - gpg --import --batch "$GPG_PRIVATE_KEY"
 
-    - echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase \
-        --preset "$GPG_KEY_GRIP"
+    - echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$GPG_KEY_GRIP"
+    - gpg-connect-agent "KEYINFO $GPG_KEY_GRIP" /bye
 
     - flatpak build-update-repo "$OSTREE_REPO" \
         --gpg-sign="$GPG_KEY_ID" \
