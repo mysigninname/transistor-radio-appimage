@@ -62,11 +62,8 @@ publish-repo:
     - ostree init --repo="$OSTREE_REPO" --mode=archive-z2
 
     - echo "==> Экспорт сборки"
-    - flatpak build-export \
-        --gpg-sign="$GPG_KEY_ID" \
-        --gpg-homedir="$HOME/.gnupg" \
-        "$OSTREE_REPO" \
-        "$BUILD_DIR"
+    - flatpak build-export --gpg-sign="$GPG_KEY_ID" --gpg-homedir="$HOME/.gnupg" "$OSTREE_REPO" "$BUILD_DIR"
+
 
 
     - |
