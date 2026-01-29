@@ -41,7 +41,7 @@ publish-repo:
     - chmod 700 ~/.gnupg
     
     # Отладка: проверяем, что переменная существует
-    - echo "Длина GPG_PRIVATE_KEY: ${#GPG_PRIVATE_KEY}"
+    #- echo "Длина GPG_PRIVATE_KEY: ${#GPG_PRIVATE_KEY}"
     
     # Импортируем приватный ключ в ASCII-armor формате
     # (проще для отладки, чем base64)
