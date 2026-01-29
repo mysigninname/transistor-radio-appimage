@@ -64,6 +64,17 @@ publish-repo:
     - echo "==> Экспорт сборки"
     - flatpak build-export "$OSTREE_REPO" "$BUILD_DIR"
 
+    # 1. Сначала подписываем summary
+    - ostree summary --repo=$OSTREE_REPO --update --gpg-sign=$GPG_KEY_ID --gpg-homedir=~/.gnupg
+    
+    # 2. Получаем список всех коммитов в репозитории и подписываем их
+    - |
+      echo "Подписываем коммиты..."
+      for commit in $(ostree log --repo=$OSTREE_REPO refs/heads/app/$APP_ID/x86_64/master | grep 'commit ' | awk '{print $2}'); do
+        echo "Подписываем коммит: $commit"
+        ostree sign --repo=$OSTREE_REPO --gpg-homedir=~/.gnupg --gpg-key=$GPG_KEY_ID $commit
+      done
+      
     - |
       if [ -n "$GPG_KEY_ID" ]; then
         echo "==> Обновление репозитория С подписью"
