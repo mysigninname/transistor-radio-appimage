@@ -98,31 +98,31 @@ publish-repo:
         
         # ---- flatpakrepo с подписью ----
         cat > $APP_ID.flatpakrepo <<EOF
-            [Flatpak Repo]
-            Title=$APP_NAME
-            Url=$PAGES_URL/repo
-            Homepage=https://invent.kde.org/saurov/transistor/
-            Comment=Internet Radio Player
-            Description=Repository for $APP_NAME application
-            GPGKey=$GPG_KEY_BASE64
-            EOF
+        [Flatpak Repo]
+        Title=$APP_NAME
+        Url=$PAGES_URL/repo
+        Homepage=https://invent.kde.org/saurov/transistor/
+        Comment=Internet Radio Player
+        Description=Repository for $APP_NAME application
+        GPGKey=$GPG_KEY_BASE64
+        EOF
         
         # Подписываем .flatpakrepo файл
         gpg --batch --detach-sign --armor $APP_ID.flatpakrepo
         
         # ---- flatpakref с подписью ----
         cat > public/$APP_ID.flatpakref <<EOF
-            [Flatpak Ref]
-            Name=$APP_ID
-            Title=$APP_NAME
-            Comment=Internet Radio Player
-            Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
-            Branch=master
-            RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
-            IsRuntime=false
-            Url=$PAGES_URL/repo
-            GPGKey=$GPG_KEY_BASE64
-            EOF
+        [Flatpak Ref]
+        Name=$APP_ID
+        Title=$APP_NAME
+        Comment=Internet Radio Player
+        Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
+        Branch=master
+        RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
+        IsRuntime=false
+        Url=$PAGES_URL/repo
+        GPGKey=$GPG_KEY_BASE64
+        EOF
         
         # Экспортируем публичный ключ в ASCII-armor
         gpg --export --armor $GPG_KEY_ID > public/repo.gpg
@@ -134,28 +134,28 @@ publish-repo:
       else
         # ---- flatpakrepo без подписи ----
         cat > public/$APP_ID.flatpakrepo <<EOF
-            [Flatpak Repo]
-            Title=$APP_NAME
-            Url=$PAGES_URL/repo
-            Homepage=https://invent.kde.org/saurov/transistor/
-            Comment=Internet Radio Player
-            Description=Repository for $APP_NAME application
-            GPGVerify=false
-            EOF
+        [Flatpak Repo]
+        Title=$APP_NAME
+        Url=$PAGES_URL/repo
+        Homepage=https://invent.kde.org/saurov/transistor/
+        Comment=Internet Radio Player
+        Description=Repository for $APP_NAME application
+        GPGVerify=false
+        EOF
         
         # ---- flatpakref без подписи ----
         cat > public/$APP_ID.flatpakref <<EOF
-            [Flatpak Ref]
-            Name=$APP_ID
-            Title=$APP_NAME
-            Comment=Internet Radio Player
-            Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
-            Branch=master
-            RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
-            IsRuntime=false
-            Url=$PAGES_URL/repo
-            GPGVerify=false
-            EOF
+        [Flatpak Ref]
+        Name=$APP_ID
+        Title=$APP_NAME
+        Comment=Internet Radio Player
+        Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
+        Branch=master
+        RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
+        IsRuntime=false
+        Url=$PAGES_URL/repo
+        GPGVerify=false
+        EOF
         
         echo "⚠ Репозиторий без подписи (для тестирования)"
       fi
