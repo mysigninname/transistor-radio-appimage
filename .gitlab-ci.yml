@@ -109,7 +109,7 @@ publish-repo:
         
         # Подписываем .flatpakrepo файл
         gpg --batch --detach-sign --armor $APP_ID.flatpakrepo
-        
+        echo "Ощибка"
         # ---- flatpakref с подписью ----
         cat > public/$APP_ID.flatpakref <<EOF
         [Flatpak Ref]
