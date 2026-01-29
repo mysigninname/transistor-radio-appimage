@@ -27,7 +27,7 @@ build-flatpak:
       - $BUILD_DIR
 
 # ------------------------------
-# Stage 2: публикация OSTree репозитория с GPG
+# Stage 2: публикация OSTree репозитория с GPG (без пароля)
 # ------------------------------
 publish-repo:
   stage: publish
@@ -35,39 +35,59 @@ publish-repo:
     - kde-sdk
   dependencies:
     - build-flatpak
+  before_script:
+    # Настраиваем GPG для CI - ключ БЕЗ ПАРОЛЯ
+    - mkdir -p ~/.gnupg
+    - chmod 700 ~/.gnupg
+    # Импортируем приватный ключ (добавьте в GitLab CI/CD variables: GPG_PRIVATE_KEY_BASE64)
+    - echo "$GPG_PRIVATE_KEY_BASE64" | base64 -d | gpg --batch --import
+    # Получаем ID ключа
+    - GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | head -1 | cut -d: -f5)
+    - echo "Используем GPG ключ (без пароля): $GPG_KEY_ID"
+    # Проверяем, что ключ без пароля
+    - echo "test" | gpg --batch --pinentry-mode loopback --sign --local-user $GPG_KEY_ID >/dev/null 2>&1 && echo "✓ Ключ без пароля работает" || echo "✗ Проблема с ключом"
   script:
     - echo "Создание OSTree репозитория..."
     - mkdir -p $OSTREE_REPO
-    - ostree init --repo=$OSTREE_REPO --mode=archive-z2 || true
-    # Включаем проверку GPG в config репозитория
-    #- ostree config --repo=$OSTREE_REPO set core.gpg-verify true
-    #- ostree config --repo=$OSTREE_REPO set core.gpg-verify-summary true
-
-    # Импортируем ключ (без пароля)
-    #- mkdir -p ~/.gnupg
-    #- gpg --import --batch "$GPG_PRIVATE_KEY"
+    - ostree init --repo=$OSTREE_REPO --mode=archive-z2
+    
     # Экспорт сборки
     - flatpak build-export $OSTREE_REPO $BUILD_DIR
 
+    # Обновление репозитория с ПОДПИСЬЮ (ключ без пароля)
     - flatpak build-update-repo $OSTREE_REPO \
-        --generate-static-deltas
+        --generate-static-deltas \
+        --gpg-sign=$GPG_KEY_ID \
+        --gpg-homedir=~/.gnupg
 
     # ---- Копирование для Pages ----
     - mkdir -p public/repo
     - cp -r $OSTREE_REPO/* public/repo/
 
-    # ---- flatpakrepo ----
-    #- GPG_KEY_INLINE=$(gpg --export --armor "$GPG_KEY_ID" | sed -e '/^-----BEGIN/d' -e '/^-----END/d' -e '/^=/d' | tr -d '\n')
+    # ---- Экспорт публичного ключа в base64 (ОДНА строка) ----
+    # Вариант 1: бинарный экспорт + base64 (рекомендуется)
+    - GPG_KEY_BASE64=$(gpg --export $GPG_KEY_ID | base64 -w0)
+    # Вариант 2: ASCII-armor без заголовков
+    # - GPG_KEY_BASE64=$(gpg --export --armor $GPG_KEY_ID | awk 'NR>2 && /-----END/{exit} {printf "%s", $0}' | tr -d '\n')
+
+    # ---- flatpakrepo (подписанный) ----
     - |
-      cat > public/$APP_ID.flatpakrepo <<EOF
+      cat > $APP_ID.flatpakrepo <<EOF
       [Flatpak Repo]
       Title=$APP_NAME
       Url=$PAGES_URL/repo
       Homepage=https://invent.kde.org/saurov/transistor/
-      GPGVerify=false
+      Comment=Internet Radio Player
+      Description=Repository for $APP_NAME application
+      GPGKey=$GPG_KEY_BASE64
       EOF
 
-    # ---- flatpakref ----
+    # Подписываем .flatpakrepo файл (ключ без пароля)
+    - gpg --batch --detach-sign --armor $APP_ID.flatpakrepo
+    - mv $APP_ID.flatpakrepo $APP_ID.flatpakrepo.asc public/
+    - mv $APP_ID.flatpakrepo public/
+
+    # ---- flatpakref (с base64 ключом) ----
     - |
       cat > public/$APP_ID.flatpakref <<EOF
       [Flatpak Ref]
@@ -76,15 +96,31 @@ publish-repo:
       Comment=Internet Radio Player
       Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg
       Branch=master
-      RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo/
+      RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo
       IsRuntime=false
-      Url=https://invent.kde.org/saurov/transistor/
-      GPGVerify=false
+      Url=$PAGES_URL/repo
+      GPGKey=$GPG_KEY_BASE64
       EOF
+
+    # Также создаем простой файл repo.gpg для тех, кто хочет добавить репо без .flatpakrepo
+    - gpg --export --armor $GPG_KEY_ID > public/repo.gpg
+
+    # ---- Проверка подписей ----
+    - echo "Проверка подписи репозитория..."
+    - ostree summary --repo=public/repo --view
+    - echo "Проверка подписи .flatpakrepo..."
+    - gpg --verify public/$APP_ID.flatpakrepo.asc public/$APP_ID.flatpakrepo && echo "✓ Подпись .flatpakrepo верна"
+
+    # ---- Информация о репозитории ----
+    - echo "=== Информация о репозитории ==="
+    - echo "URL репозитория: $PAGES_URL/repo"
+    - echo "Ключ подписи ID: $GPG_KEY_ID"
+    - echo "Длина base64 ключа: ${GPG_KEY_BASE64} символов"
 
   artifacts:
     paths:
       - public
+    expire_in: 1 week
 
 # ------------------------------
 # Stage 3: деплой на Pages
