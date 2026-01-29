@@ -95,7 +95,7 @@ publish-repo:
       if [ -n "$GPG_KEY_ID" ]; then
         # Экспорт публичного ключа в base64 (одна строка)
         GPG_KEY_BASE64=$(gpg --export $GPG_KEY_ID | base64 -w0)
-        
+        echo "1"
         # ---- flatpakrepo с подписью ----
         cat > $APP_ID.flatpakrepo <<EOF
         [Flatpak Repo]
@@ -109,7 +109,7 @@ publish-repo:
         
         # Подписываем .flatpakrepo файл
         gpg --batch --detach-sign --armor $APP_ID.flatpakrepo
-        echo "Ощибка"
+        echo "2"
         # ---- flatpakref с подписью ----
         cat > public/$APP_ID.flatpakref <<EOF
         [Flatpak Ref]
