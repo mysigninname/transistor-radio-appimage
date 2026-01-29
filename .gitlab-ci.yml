@@ -66,7 +66,7 @@ publish-repo:
 
     - echo "Экспорт сборки в репозиторий..."
     - COMMIT_HASH=$(flatpak build-export $OSTREE_REPO $BUILD_DIR 2>&1 | grep -oE '[a-f0-9]{64}' | tail -1)
-    - echo "Создан коммит: $COMMIT_HASH"
+    #- echo "Создан коммит: $COMMIT_HASH"
     
     # Проверяем, что коммит получен
     - |
@@ -79,7 +79,7 @@ publish-repo:
 
     # Создаём ref для коммита (это важно!)
     - ostree refs --repo=$OSTREE_REPO --create=refs/heads/app/$APP_ID/x86_64/master $COMMIT_HASH
-    - echo "Создан ref: refs/heads/app/$APP_ID/x86_64/master -> $COMMIT_HASH"
+    #- echo "Создан ref: refs/heads/app/$APP_ID/x86_64/master -> $COMMIT_HASH"
 
     # Подписываем коммит ДО обновления репозитория
     - echo "Подписываем коммит $COMMIT_HASH..."
