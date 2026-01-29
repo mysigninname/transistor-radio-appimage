@@ -93,10 +93,7 @@ publish-repo:
     # ---- Создание файлов репозитория ----
     - |
       if [ -n "$GPG_KEY_ID" ]; then
-        # Экспорт публичного ключа в base64 (одна строка)
         GPG_KEY_BASE64=$(gpg --export $GPG_KEY_ID | base64 -w0)
-        echo "1"
-        # ---- flatpakrepo с подписью ----
         cat > $APP_ID.flatpakrepo <<EOF
         [Flatpak Repo]
         Title=$APP_NAME
@@ -106,11 +103,7 @@ publish-repo:
         Description=Repository for $APP_NAME application
         GPGKey=$GPG_KEY_BASE64
         EOF
-        
-        # Подписываем .flatpakrepo файл
         gpg --batch --detach-sign --armor $APP_ID.flatpakrepo
-        echo "2"
-        # ---- flatpakref с подписью ----
         cat > public/$APP_ID.flatpakref <<EOF
         [Flatpak Ref]
         Name=$APP_ID
@@ -123,16 +116,10 @@ publish-repo:
         Url=$PAGES_URL/repo
         GPGKey=$GPG_KEY_BASE64
         EOF
-        
-        # Экспортируем публичный ключ в ASCII-armor
         gpg --export --armor $GPG_KEY_ID > public/repo.gpg
-        
-        # Перемещаем файлы
         mv $APP_ID.flatpakrepo $APP_ID.flatpakrepo.asc public/
-        
         echo "✓ Репозиторий подписан"
       else
-        # ---- flatpakrepo без подписи ----
         cat > public/$APP_ID.flatpakrepo <<EOF
         [Flatpak Repo]
         Title=$APP_NAME
@@ -142,8 +129,6 @@ publish-repo:
         Description=Repository for $APP_NAME application
         GPGVerify=false
         EOF
-        
-        # ---- flatpakref без подписи ----
         cat > public/$APP_ID.flatpakref <<EOF
         [Flatpak Ref]
         Name=$APP_ID
@@ -156,7 +141,6 @@ publish-repo:
         Url=$PAGES_URL/repo
         GPGVerify=false
         EOF
-        
         echo "⚠ Репозиторий без подписи (для тестирования)"
       fi
 
