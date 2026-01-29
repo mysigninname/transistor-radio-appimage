@@ -38,20 +38,23 @@ publish-repo:
     - build-flatpak
 
   before_script:
-    - echo "==> Настройка GPG"
-    - mkdir -p ~/.gnupg
-    - chmod 700 ~/.gnupg
-
-    # Импорт приватного ключа (БЕЗ ПАРОЛЯ)
     - |
+      echo "==> Настройка GPG"
+      mkdir -p ~/.gnupg
+      chmod 700 ~/.gnupg
+
       if [ -n "$GPG_PRIVATE_KEY" ]; then
         echo "$GPG_PRIVATE_KEY" | gpg --batch --import
-        export GPG_KEY_ID="$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/{print $5; exit}')"
-        echo "Используется GPG ключ: $GPG_KEY_ID"
+
+        GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/ {print $5; exit}')
+        echo "Используем GPG_KEY_ID=$GPG_KEY_ID"
+
+        echo "test" | gpg --batch --clear-sign --local-user "$GPG_KEY_ID" > /dev/null
+        echo "✓ GPG ключ работает без пароля"
       else
-        echo "⚠ GPG_PRIVATE_KEY не задан — репозиторий будет без подписи"
-        export GPG_KEY_ID=""
+        echo "⚠ GPG_PRIVATE_KEY не задан"
       fi
+
 
   script:
     - echo "==> Создание OSTree репозитория"
