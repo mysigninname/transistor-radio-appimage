@@ -18,7 +18,7 @@ build-flatpak:
   tags:
     - kde-sdk
   script:
-    - echo "Создание build директории..."
+    - echo "Создание build директории...."
     - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
     - mkdir -p $BUILD_DIR
     - flatpak-builder --force-clean $BUILD_DIR .flatpak-manifest.json
