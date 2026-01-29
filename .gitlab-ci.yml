@@ -42,8 +42,8 @@ publish-repo:
     # Импортируем приватный ключ (добавьте в GitLab CI/CD variables: GPG_PRIVATE_KEY_BASE64)
     - echo "$GPG_PRIVATE_KEY_BASE64" | base64 -d | gpg --batch --import
     # Получаем ID ключа
-    - GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | head -1 | cut -d: -f5)
-    - echo "Используем GPG ключ (без пароля): $GPG_KEY_ID"
+    #- GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | head -1 | cut -d: -f5)
+    #- echo "Используем GPG ключ (без пароля): $GPG_KEY_ID"
     # Проверяем, что ключ без пароля
     - echo "test" | gpg --batch --pinentry-mode loopback --sign --local-user $GPG_KEY_ID >/dev/null 2>&1 && echo "✓ Ключ без пароля работает" || echo "✗ Проблема с ключом"
   script:
@@ -113,9 +113,9 @@ publish-repo:
 
     # ---- Информация о репозитории ----
     - echo "=== Информация о репозитории ==="
-    - echo "URL репозитория: $PAGES_URL/repo"
-    - echo "Ключ подписи ID: $GPG_KEY_ID"
-    - echo "Длина base64 ключа: ${GPG_KEY_BASE64} символов"
+    #- echo "URL репозитория: $PAGES_URL/repo"
+    #- echo "Ключ подписи ID: $GPG_KEY_ID"
+    #- echo "Длина base64 ключа: ${GPG_KEY_BASE64} символов"
 
   artifacts:
     paths:
