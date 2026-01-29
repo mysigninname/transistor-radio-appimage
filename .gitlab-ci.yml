@@ -61,19 +61,29 @@ publish-repo:
     - mkdir -p "$OSTREE_REPO"
     - ostree init --repo="$OSTREE_REPO" --mode=archive-z2
 
-    - echo "==> Экспорт сборки"
-    - flatpak build-export "$OSTREE_REPO" "$BUILD_DIR"
+    #- echo "==> Экспорт сборки"
+    #- flatpak build-export "$OSTREE_REPO" "$BUILD_DIR"
 
-    # 1. Сначала подписываем summary
-    - ostree summary --repo=$OSTREE_REPO --update --gpg-sign=$GPG_KEY_ID --gpg-homedir=~/.gnupg
+    - echo "Экспорт сборки в репозиторий..."
+    - COMMIT_HASH=$(flatpak build-export $OSTREE_REPO $BUILD_DIR 2>&1 | grep -oE '[a-f0-9]{64}' | tail -1)
+    - echo "Создан коммит: $COMMIT_HASH"
     
-    # 2. Получаем список всех коммитов в репозитории и подписываем их
+    # Проверяем, что коммит получен
     - |
-      echo "Подписываем коммиты..."
-      for commit in $(ostree log --repo=$OSTREE_REPO refs/heads/app/$APP_ID/x86_64/master | grep 'commit ' | awk '{print $2}'); do
-        echo "Подписываем коммит: $commit"
-        ostree sign --repo=$OSTREE_REPO --gpg-homedir=~/.gnupg --gpg-key=$GPG_KEY_ID $commit
-      done
+      if [ -z "$COMMIT_HASH" ]; then
+        echo "Ошибка: не удалось получить хеш коммита"
+        echo "Вывод flatpak build-export:"
+        flatpak build-export $OSTREE_REPO $BUILD_DIR
+        exit 1
+      fi
+
+    # Создаём ref для коммита (это важно!)
+    - ostree refs --repo=$OSTREE_REPO --create=refs/heads/app/$APP_ID/x86_64/master $COMMIT_HASH
+    - echo "Создан ref: refs/heads/app/$APP_ID/x86_64/master -> $COMMIT_HASH"
+
+    # Подписываем коммит ДО обновления репозитория
+    - echo "Подписываем коммит $COMMIT_HASH..."
+    - ostree sign --repo=$OSTREE_REPO --gpg-homedir=~/.gnupg --gpg-key=$GPG_KEY_ID $COMMIT_HASH
       
     - |
       if [ -n "$GPG_KEY_ID" ]; then
