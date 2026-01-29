@@ -48,8 +48,8 @@ publish-repo:
     - |
       if [ -n "$GPG_PRIVATE_KEY" ]; then
         echo "Импортируем GPG ключ..."
-        echo "$GPG_PRIVATE_KEY" > tmp/private.asc
-        gpg --batch --import tmp/private.asc
+        #echo "$GPG_PRIVATE_KEY" > tmp/private.asc
+        gpg --batch --import $GPG_PRIVATE_KEY
         GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | head -1 | cut -d: -f5)
         echo "Используем GPG ключ: $GPG_KEY_ID"
         # Проверяем, что ключ без пароля
