@@ -124,7 +124,7 @@ publish-repo:
 
       echo "[Flatpak Ref]"                     >  "$REF_FILE"
       echo "Name=$APP_ID"                     >> "$REF_FILE"
-      echo "Title=$APP_ID from $APP_NAME"                  >> "$REF_FILE"
+      echo "Title=$APP_NAME"                  >> "$REF_FILE"
       echo "Comment=Internet Radio Player"    >> "$REF_FILE"
       echo "Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg" >> "$REF_FILE"
       echo "Branch=master"                    >> "$REF_FILE"
