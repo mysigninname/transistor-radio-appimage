@@ -7,6 +7,7 @@ variables:
   APP_ID: ru.transistor_radio.transistor
   APP_NAME: Transistor
   BUILD_DIR: build
+  RUNTIME_REPO: "https://flathub.org/repo/flathub.flatpakrepo"
   OSTREE_REPO: ostree-repo
   PAGES_URL: https://saurov.local-kde.org/transistor
   GIT_STRATEGY: fetch
