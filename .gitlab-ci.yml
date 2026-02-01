@@ -22,7 +22,7 @@ build-flatpak:
     - echo "==> Сборка Flatpak"
     - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
     - mkdir -p "$BUILD_DIR"
-    - flatpak-builder --force-clean "$BUILD_DIR" .flatpak-manifest.json
+    - flatpak-builder --user --install-deps-from=flathub --force-clean "$BUILD_DIR" .flatpak-manifest.json
   artifacts:
     paths:
       - $BUILD_DIR
