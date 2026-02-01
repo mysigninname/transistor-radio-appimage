@@ -20,6 +20,7 @@ build-flatpak:
     - kde-sdk
   script:
     - echo "==> Сборка Flatpak"
+    - flatpak remote-add --user --if-not-exists flathub ${RUNTIME_REPO}
     - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
     - mkdir -p "$BUILD_DIR"
     - flatpak-builder --user --install-deps-from=flathub --force-clean "$BUILD_DIR" .flatpak-manifest.json
