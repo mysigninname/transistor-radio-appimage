@@ -131,7 +131,7 @@ publish-repo:
       echo "Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg" >> "$REF_FILE"
       echo "Branch=master"                    >> "$REF_FILE"
       echo "IsRuntime=false"                  >> "$REF_FILE"
-      echo "RuntimeRepo=$PAGES_URL/$APP_ID.flatpakrepo" >> "$REF_FILE"
+      echo "RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo" >> "$REF_FILE"
       echo "Url=$PAGES_URL/repo"              >> "$REF_FILE"
       echo "SuggestRemoteName=transistor"      >> "$REF_FILE"
       echo "GPGKey=$GPG_KEY_BASE64"            >> "$REF_FILE"
