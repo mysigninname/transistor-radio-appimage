@@ -67,8 +67,8 @@ FeedPage {
             visible: gridView.count == 0 && !StationSearchModel.isSearching
 
             icon.name: "search"
-            text: "No search results found"
-            explanation: "Please specify the search parameters."
+            text: i18n("No search results found")
+            explanation: i18n("Please specify the search parameters.")
         }
         Kirigami.LoadingPlaceholder {
             anchors.centerIn: parent

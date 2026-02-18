@@ -102,7 +102,7 @@ Kirigami.PromptDialog {
             Kirigami.PlaceholderMessage {
                 width: parent.width - (Kirigami.Units.largeSpacing * 4)
                 visible: stationNameField.text.length == 0
-                explanation: "Image will be generated from name of the station"
+                explanation: i18n("Image will be generated from name of the station")
                 anchors.centerIn: parent
             }
         }

@@ -118,8 +118,8 @@ Kirigami.ApplicationWindow {
         id: deleteDialog
         dialogType: Kirigami.PromptDialog.Warning
         property QtObject feed
-        title: "Remove Station?"
-        subtitle: "Do you really want to remove this station? This action cannot be canceled."
+        title: i18n("Remove Station?")
+        subtitle: i18n("Do you really want to remove this station? This action cannot be canceled.")
         standardButtons: Kirigami.Dialog.Yes | Kirigami.Dialog.No
 
         onAccepted: {
@@ -128,7 +128,7 @@ Kirigami.ApplicationWindow {
                 pageStack.pop();
             }
 
-            showPassiveNotification("Station is removed");
+            showPassiveNotification(i18n("Station is removed"));
         }
     }
 

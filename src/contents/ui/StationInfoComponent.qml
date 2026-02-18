@@ -350,7 +350,7 @@ ColumnLayout {
         }
         TextMetrics {
             id: perecentWidth
-            text: "199%"
+            text: i18n("199%")
         }
     }
     Controls.Label {

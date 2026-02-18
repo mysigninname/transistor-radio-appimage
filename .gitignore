@@ -4,6 +4,8 @@ build
 .cache
 .clang-format
 CMakeLists.txt.user
+po/
+po
 
 # Flatpak build artifacts
 .flatpak-builder/

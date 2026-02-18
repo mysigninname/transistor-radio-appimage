@@ -75,8 +75,8 @@ FeedPage {
             visible: gridView.count == 0
 
             icon.name: "ru.transistor_radio.transistor"
-            text: "Your library is empty"
-            explanation: "Add new stations by clicking on the button below."
+            text: i18n("Your library is empty")
+            explanation: i18n("Add new stations by clicking on the button below.")
             helpfulAction: Kirigami.Action {
                 icon.name: "list-add"
                 text: i18n("Add New Stations")

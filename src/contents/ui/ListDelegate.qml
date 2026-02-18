@@ -89,7 +89,7 @@ Item {
 
                     Controls.Label {
                         visible: stationIsLocal
-                        text: "Local Station"
+                        text: i18n("Local Station")
                         antialiasing: true
                     }
 

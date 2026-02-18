@@ -33,11 +33,8 @@ AudioPlayer::AudioPlayer(QObject *parent)
     , m_streamReader(new StreamReader(this))
     , m_notificationManager(new NotificationManager(this))
 {
-    const auto &audioOutputs = QMediaDevices::audioOutputs();
-    if (!audioOutputs.isEmpty()) {
-        m_audioOutput.setDevice(audioOutputs.first());
-        m_mediaPlayer.setAudioOutput(&m_audioOutput);
-    }
+    m_audioOutput.setDevice(QMediaDevices::defaultAudioOutput());
+    m_mediaPlayer.setAudioOutput(&m_audioOutput);
     connect(&m_mediaPlayer, &QMediaPlayer::mediaStatusChanged, this, &AudioPlayer::onMediaStatusChanged);
     connect(&m_audioOutput, &QAudioOutput::mutedChanged, this, &AudioPlayer::mutedChanged);
     connect(this, &AudioPlayer::streamTitleChanged, this, &AudioPlayer::showNotification);
@@ -206,19 +203,16 @@ void AudioPlayer::onAudioOutputsChanged()
 
 void AudioPlayer::updateAudioDevice()
 {
-    const QList<QAudioDevice> availableDevices = QMediaDevices::audioOutputs();
+    const QAudioDevice defaultDevice = QMediaDevices::defaultAudioOutput();
     const QAudioDevice currentDevice = m_audioOutput.device();
 
-    if (availableDevices.contains(currentDevice)) {
-        // Current device is still available, no change needed
+    if (currentDevice == defaultDevice) {
+        // Already using default device, no change needed
         return;
     }
 
-    if (!availableDevices.isEmpty()) {
-        m_audioOutput.setDevice(availableDevices.first());
-        Q_EMIT deviceChanged();
-    } else {
-    }
+    m_audioOutput.setDevice(defaultDevice);
+    Q_EMIT deviceChanged();
 }
 
 QList<QAudioDevice> AudioPlayer::availableAudioDevices() const
