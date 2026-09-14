@@ -1,205 +1,428 @@
-name: Build Transistor AnyLinux AppImage (sharun)
+name: Build Transistor AnyLinux AppImage
 
 on:
   push:
-    branches: ["main"]
-    tags: ["v*"]
+    branches:
+      - main
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: build-transistor-appimage-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-x86_64:
     name: Build x86_64 AppImage
     runs-on: ubuntu-22.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     env:
-      REPO_SLUG: ${{ github.repository }}
       APP_NAME: transistor
-      OUT_DIR: dist
       ARCH: x86_64
-      CMAKE_BUILD_TYPE: Release
-      # Upstream
-      TRANSISTOR_REPO: gitlab.com/driglu4it/transistor.git
+      BUILD_TYPE: Release
+      TRANSISTOR_REPOSITORY: https://gitlab.com/driglu4it/transistor.git
+      QUICK_SHARUN_URL: https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/main/useful-tools/quick-sharun.sh
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Install build dependencies
+      - name: Install build and deployment dependencies
+        shell: bash
         run: |
+          set -Eeuo pipefail
+
           sudo apt-get update
+
           sudo apt-get install -y --no-install-recommends \
-            ca-certificates git wget curl jq \
-            build-essential ninja-build cmake pkg-config \
-            qt6-base-dev qt6-base-dev-tools \
-            qt6-multimedia-dev qt6-multimedia-dev-tools \
-            libqt6svg6-dev libqt6svg6-dev \
-            libqt6quick-templates2-dev \
-            libqt6quick6-dev \
+            ca-certificates \
+            git \
+            wget \
+            curl \
+            file \
+            jq \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            patchelf \
+            strace \
+            xvfb \
+            dbus-x11 \
+            desktop-file-utils \
+            xdg-utils \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            qt6-declarative-dev \
+            qt6-declarative-dev-tools \
+            qt6-multimedia-dev \
+            qt6-multimedia-dev-tools \
+            qt6-svg-dev \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            libqt6quickcontrols2-6 \
+            libqt6quicktemplates2-6 \
             libasound2-dev \
             libpulse-dev \
+            libpipewire-0.3-dev \
             libssl-dev \
             zlib1g-dev \
-            desktop-file-utils \
-            librsvg2-dev \
             libxkbcommon-dev \
-            libx11-dev libxext-dev libxrender-dev libxtst-dev \
-            libegl1-mesa-dev libgles2-mesa-dev \
+            libxkbcommon-x11-dev \
+            libx11-dev \
+            libxext-dev \
+            libxrender-dev \
+            libxtst-dev \
+            libegl1-mesa-dev \
+            libgles2-mesa-dev \
+            libgl-dev \
             libvulkan-dev \
             libdrm-dev \
             mesa-common-dev
 
-      - name: Install extra Qt tools (if needed)
+      - name: Clone Transistor
+        shell: bash
         run: |
-          sudo apt-get install -y --no-install-recommends qt6-l10n-tools || true
+          set -Eeuo pipefail
 
-      - name: Build Transistor (from source)
+          git clone \
+            --depth 1 \
+            --recurse-submodules \
+            "${TRANSISTOR_REPOSITORY}" \
+            transistor
+
+      - name: Build and install Transistor into /usr
+        shell: bash
+        working-directory: transistor
         run: |
-          set -euxo pipefail
+          set -Eeuo pipefail
 
-          rm -rf transistor build
-          git clone --depth 1 --recursive "https://$TRANSISTOR_REPO" transistor
-          cd transistor
-
-          mkdir -p build
-          cd build
-
-          cmake .. -GNinja \
-            -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}" \
+          cmake \
+            -S . \
+            -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DBUILD_TESTING=OFF
 
-          ninja
-          DESTDIR="$GITHUB_WORKSPACE/stage" ninja install
+          cmake --build build --parallel "$(nproc)"
 
-          echo "Installed files to: $GITHUB_WORKSPACE/stage"
-          ls -la "$GITHUB_WORKSPACE/stage/usr" | head -n 50
+          # quick-sharun requires the application to be installed into
+          # the real /usr hierarchy before deployment.
+          sudo cmake --install build
 
-      - name: Prepare AnyLinux AppImage using quick-sharun (sharun-based)
+          sudo ldconfig
+
+          echo "Installed executable candidates:"
+          find /usr/bin -maxdepth 1 -type f -executable \
+            -printf '%p\n' \
+            | sort
+
+          echo "Installed desktop entries:"
+          find /usr/share/applications -maxdepth 1 -type f \
+            -name '*.desktop' \
+            -printf '%p\n' \
+            | sort || true
+
+      - name: Detect installed application files
+        id: detect
+        shell: bash
         run: |
-          set -euxo pipefail
+          set -Eeuo pipefail
 
-          mkdir -p "${OUT_DIR}"
+          DESKTOP_FILE="$(
+            find /usr/share/applications \
+              -maxdepth 1 \
+              -type f \
+              -name '*.desktop' \
+              -print \
+              | while read -r desktop; do
+                  if grep -Eiq '^(Name|Exec)=.*transistor|^Exec=.*transistor' "$desktop"; then
+                    printf '%s\n' "$desktop"
+                    break
+                  fi
+                done
+          )"
 
-          # Stash staging into a "fake root" (/usr layout) that quick-sharun can bundle.
-          # quick-sharun is run with paths; it expects installed-to-/usr layout.
-          STAGE_ROOT="$GITHUB_WORKSPACE/stage"
-          export ICON="${STAGE_ROOT}/usr/share/icons/hicolor/256x256/apps/transistor.png"
-          export DESKTOP="${STAGE_ROOT}/usr/share/applications/org.driglu4it.transistor.desktop"
-          # Fallback icon/desktop detection if upstream file names differ
-          if [ ! -f "$ICON" ]; then
-            ICON="$(find "$STAGE_ROOT/usr/share/icons" -type f \( -name '*.png' -o -name '*.svg' \) | head -n 1 || true)"
-            if [ -z "$ICON" ]; then
-              ICON=/usr/share/icons/hicolor/256x256/apps/transistor.png
-            fi
+          if [ -z "${DESKTOP_FILE}" ]; then
+            DESKTOP_FILE="$(
+              find /usr/share/applications \
+                -maxdepth 1 \
+                -type f \
+                -name '*.desktop' \
+                -print \
+                | head -n 1
+            )"
           fi
-          if [ ! -f "$DESKTOP" ]; then
-            DESKTOP="$(find "$STAGE_ROOT/usr/share/applications" -type f \( -name '*.desktop' \) | head -n 1 || true)"
-            if [ -z "$DESKTOP" ]; then
-              DESKTOP=/usr/share/applications/transistor.desktop
-            fi
+
+          if [ -z "${DESKTOP_FILE}" ] || [ ! -f "${DESKTOP_FILE}" ]; then
+            echo "No desktop file was installed."
+            exit 1
           fi
 
+          EXEC_NAME="$(
+            awk -F= '
+              /^Exec=/ {
+                value=$2
+                sub(/[[:space:]].*$/, "", value)
+                sub(/^.*\//, "", value)
+                print value
+                exit
+              }
+            ' "${DESKTOP_FILE}"
+          )"
+
+          if [ -z "${EXEC_NAME}" ]; then
+            echo "Could not determine Exec= from ${DESKTOP_FILE}"
+            exit 1
+          fi
+
+          EXECUTABLE="/usr/bin/${EXEC_NAME}"
+
+          if [ ! -x "${EXECUTABLE}" ]; then
+            EXECUTABLE="$(
+              find /usr/bin \
+                -maxdepth 1 \
+                -type f \
+                -executable \
+                -iname '*transistor*' \
+                | head -n 1
+            )"
+          fi
+
+          if [ -z "${EXECUTABLE}" ] || [ ! -x "${EXECUTABLE}" ]; then
+            echo "Could not find the installed Transistor executable."
+            exit 1
+          fi
+
+          ICON_NAME="$(
+            awk -F= '
+              /^Icon=/ {
+                value=$2
+                sub(/[[:space:]].*$/, "", value)
+                sub(/^.*\//, "", value)
+                print value
+                exit
+              }
+            ' "${DESKTOP_FILE}"
+          )"
+
+          ICON_FILE=""
+
+          if [ -n "${ICON_NAME}" ]; then
+            ICON_FILE="$(
+              find /usr/share/icons /usr/share/pixmaps \
+                -type f \
+                \( \
+                  -name "${ICON_NAME}" \
+                  -o -name "${ICON_NAME}.png" \
+                  -o -name "${ICON_NAME}.svg" \
+                  -o -name "${ICON_NAME}.xpm" \
+                \) \
+                -print \
+                | head -n 1
+            )"
+          fi
+
+          if [ -z "${ICON_FILE}" ]; then
+            ICON_FILE="$(
+              find /usr/share/icons /usr/share/pixmaps \
+                -type f \
+                \( -name '*.png' -o -name '*.svg' -o -name '*.xpm' \) \
+                -iname '*transistor*' \
+                -print \
+                | head -n 1
+            )"
+          fi
+
+          if [ -z "${ICON_FILE}" ]; then
+            echo "No Transistor icon found; quick-sharun will use the desktop entry."
+            ICON_VALUE="DUMMY"
+          else
+            ICON_VALUE="${ICON_FILE}"
+          fi
+
+          echo "desktop=${DESKTOP_FILE}" >> "${GITHUB_OUTPUT}"
+          echo "executable=${EXECUTABLE}" >> "${GITHUB_OUTPUT}"
+          echo "icon=${ICON_VALUE}" >> "${GITHUB_OUTPUT}"
+
+          echo "Desktop file: ${DESKTOP_FILE}"
+          echo "Executable:   ${EXECUTABLE}"
+          echo "Icon:         ${ICON_VALUE}"
+
+      - name: Deploy with quick-sharun and create AppImage
+        shell: bash
+        env:
+          DESKTOP_FILE: ${{ steps.detect.outputs.desktop }}
+          EXECUTABLE: ${{ steps.detect.outputs.executable }}
+          ICON_FILE: ${{ steps.detect.outputs.icon }}
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p dist
+          rm -rf AppDir
+
+          wget \
+            --retry-connrefused \
+            --tries=5 \
+            --timeout=30 \
+            -O quick-sharun.sh \
+            "${QUICK_SHARUN_URL}"
+
+          chmod +x quick-sharun.sh
+
+          test -s quick-sharun.sh
+          test -x "${EXECUTABLE}"
+          test -f "${DESKTOP_FILE}"
+
+          export ARCH="${ARCH}"
           export APPDIR="${GITHUB_WORKSPACE}/AppDir"
-          export OUTPATH="${GITHUB_WORKSPACE}/${OUT_DIR}"
-          export OUTNAME="${APP_NAME}-${{ github.ref_name }}-${ARCH}-anylinux.AppImage"
-          export ADD_HOOKS="self-updater.bg.hook"
+          export OUTPATH="${GITHUB_WORKSPACE}/dist"
+          export OUTPUT_APPIMAGE=1
 
-          SHARUN="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh"
-          URUNTIME="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/uruntime2appimage.sh"
+          export DESKTOP="${DESKTOP_FILE}"
+          export ICON="${ICON_FILE}"
 
-          wget --retry-connrefused --tries=30 "$SHARUN" -O ./quick-sharun
-          chmod +x ./quick-sharun
-
-          wget --retry-connrefused --tries=30 "$URUNTIME" -O ./uruntime2appimage
-          chmod +x ./uruntime2appimage
-
-          # Ensure AppDir is clean
-          rm -rf "$APPDIR"
-          mkdir -p "$APPDIR"
-
-          # Detect the installed executable to pass to quick-sharun:
-          # Common install path: /usr/bin/transistor (or similar).
-          BIN="$(find "$STAGE_ROOT/usr/bin" -maxdepth 1 -type f -executable | head -n 1)"
-          if [ -z "$BIN" ]; then
-            echo "Could not find executable in $STAGE_ROOT/usr/bin"
-            exit 1
-          fi
-
-          # Fix expected absolute paths by temporarily overlaying stage into system paths (without sudo):
-          # We invoke quick-sharun using stage-prefixed absolute paths; it will bundle from there.
-          # Ensure quick-sharun sees the binary at that path.
-          if [ ! -f "$BIN" ]; then
-            echo "Binary not found: $BIN"
-            exit 1
-          fi
-
-          echo "Using binary: $BIN"
-          echo "Using ICON: $ICON"
-          echo "Using DESKTOP: $DESKTOP"
-
-          # quick-sharun bundling:
-          # Also pass likely dlopen libraries if the build uses them (optional; script can autodetect).
-          # If you know exact extra libs, add them to the list.
+          # Force deployment of libraries commonly loaded by a Qt multimedia
+          # application. quick-sharun also performs automatic detection.
+          export DEPLOY_QT=1
+          export DEPLOY_QML=1
           export DEPLOY_OPENGL=1
-          export DEPLOY_VULKAN=1
+          export DEPLOY_PULSE=1
           export DEPLOY_PIPEWIRE=1
+          export DEPLOY_GSTREAMER=1
+          export DEPLOY_VULKAN=1
 
-          # Put a copy of stage into a known location for quick-sharun path resolution
-          # (quick-sharun will copy needed libs into the AppDir).
-          ./quick-sharun "$BIN"
+          # Required for runtime-loaded libraries discovered during deployment.
+          export STRACE_MODE=1
+          export STRACE_TIME=8
 
-          # Generate AppImage with uruntime2appimage
-          ./uruntime2appimage
+          # Avoid selecting a desktop theme unavailable in the target system.
+          export QT_QPA_PLATFORMTHEME=fusion
 
-          echo "Output files:"
-          ls -la "${OUT_DIR}" | tail -n 200
+          ./quick-sharun.sh "${EXECUTABLE}"
 
-      - name: Collect AppImage artifacts
+          echo "Generated files:"
+          find dist -maxdepth 1 -type f -printf '%f\n' | sort
+
+      - name: Validate AppImage output
+        shell: bash
         run: |
-          set -euxo pipefail
-          ls -ლა dist
-          APPIMAGE="$(find dist -maxdepth 1 -type f -name "*.AppImage" | head -n 1)"
-          if [ -z "$APPIMAGE" ]; then
-            echo "No AppImage produced"
+          set -Eeuo pipefail
+
+          APPIMAGE="$(
+            find dist \
+              -maxdepth 1 \
+              -type f \
+              -name '*.AppImage' \
+              -print \
+              | head -n 1
+          )"
+
+          if [ -z "${APPIMAGE}" ]; then
+            echo "No AppImage was produced."
+            find dist -maxdepth 2 -type f -print || true
             exit 1
           fi
-          echo "APPIMAGE=$APPIMAGE" >> "$GITHUB_OUTPUT"
-        id: artifact
 
-      - name: Upload artifact
+          chmod +x "${APPIMAGE}"
+
+          # Check that the file has an AppImage/ELF magic header.
+          file "${APPIMAGE}"
+
+          case "$(file -b "${APPIMAGE}")" in
+            *ELF*)
+              ;;
+            *)
+              echo "The generated file is not an ELF AppImage."
+              exit 1
+              ;;
+          esac
+
+          # Test startup without requiring FUSE. The application is stopped
+          # after a short period because this is a GUI application.
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          export QT_QPA_PLATFORM=offscreen
+          export XDG_RUNTIME_DIR=/tmp
+          export USER="${USER:-github}"
+
+          timeout --signal=TERM --kill-after=10s 20s \
+            xvfb-run -a "${APPIMAGE}" \
+            > appimage-test.log 2>&1 || status=$?
+
+          status="${status:-0}"
+
+          # timeout returns 124 when the GUI remains running, which is
+          # considered a successful startup test.
+          if [ "${status}" -ne 0 ] && [ "${status}" -ne 124 ] && [ "${status}" -ne 143 ]; then
+            cat appimage-test.log
+            echo "AppImage startup test failed with exit code ${status}."
+            exit 1
+          fi
+
+          echo "AppImage startup test completed."
+          ls -lh "${APPIMAGE}"
+
+      - name: Rename AppImage
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          APPIMAGE="$(
+            find dist \
+              -maxdepth 1 \
+              -type f \
+              -name '*.AppImage' \
+              -print \
+              | head -n 1
+          )"
+
+          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${VERSION//\//-}"
+
+          TARGET="dist/transistor-${VERSION}-x86_64-anylinux.AppImage"
+
+          if [ "${APPIMAGE}" != "${TARGET}" ]; then
+            mv "${APPIMAGE}" "${TARGET}"
+          fi
+
+          sha256sum "${TARGET}" > "${TARGET}.sha256"
+
+          echo "Final artifacts:"
+          ls -lh dist
+
+      - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: appimage-x86_64
-          path: dist/*.AppImage
+          name: transistor-x86_64-anylinux-appimage
+          path: |
+            dist/*.AppImage
+            dist/*.sha256
           if-no-files-found: error
+          retention-days: 30
 
-  build-x86_64-release:
-    name: Build x86_64 AppImage (release publish)
+  publish-release:
+    name: Publish GitHub release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-x86_64]
+    needs:
+      - build-x86_64
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
-
-    env:
-      ARCH: x86_64
 
     steps:
-      - name: Download artifact
+      - name: Download AppImage artifact
         uses: actions/download-artifact@v4
         with:
-          name: appimage-x86_64
+          name: transistor-x86_64-anylinux-appimage
           path: dist
 
-      - name: Publish to GitHub Release
+      - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.AppImage
+          files: |
+            dist/*.AppImage
+            dist/*.sha256
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
