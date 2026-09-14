@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build-x86_64:
     name: Build x86_64 AppImage
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 120
 
     env:
@@ -46,6 +46,7 @@ jobs:
             build-essential \
             cmake \
             ninja-build \
+            extra-cmake-modules \
             pkg-config \
             patchelf \
             strace \
