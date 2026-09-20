@@ -12,6 +12,24 @@ variables:
   PAGES_URL: https://saurov.local-kde.org/transistor
   GIT_STRATEGY: fetch
 
+
+# ------------------------------
+# Stage 1: сборка Flatpak
+# ------------------------------
+build-flatpak:
+  stage: build
+  tags:
+    - kde-sdk
+  script:
+    - echo "==> Сборка Flatpak"
+    - flatpak remote-add --user --if-not-exists flathub ${RUNTIME_REPO}
+    - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
+    - mkdir -p "$BUILD_DIR"
+    - flatpak-builder --user --install-deps-from=flathub --force-clean "$BUILD_DIR" .flatpak-manifest.json
+  artifacts:
+    paths:
+      - $BUILD_DIR
+
 # ------------------------------
 # AppImage
 # ------------------------------
@@ -54,22 +72,6 @@ build-appimage:
       - "*.AppImage"
     expire_in: 1 week
 
-# ------------------------------
-# Stage 1: сборка Flatpak
-# ------------------------------
-build-flatpak:
-  stage: build
-  tags:
-    - kde-sdk
-  script:
-    - echo "==> Сборка Flatpak"
-    - flatpak remote-add --user --if-not-exists flathub ${RUNTIME_REPO}
-    - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
-    - mkdir -p "$BUILD_DIR"
-    - flatpak-builder --user --install-deps-from=flathub --force-clean "$BUILD_DIR" .flatpak-manifest.json
-  artifacts:
-    paths:
-      - $BUILD_DIR
 
 # ------------------------------
 # Stage 2: публикация OSTree репозитория
