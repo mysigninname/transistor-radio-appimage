@@ -30,8 +30,9 @@ build-flatpak:
     paths:
       - $BUILD_DIR
 
+      
 # ------------------------------
-# AppImage
+# Stage 1b: сборка AppImage
 # ------------------------------
 build-appimage:
   stage: build
@@ -39,32 +40,28 @@ build-appimage:
     - kde-sdk
 
   script:
-    - echo "==> Building AppImage"
+    - echo "==> Сборка AppImage"
 
-    # Build the application using the KDE SDK runner
     - rm -rf native-build AppDir
     - cmake -S . -B native-build -G Ninja -DCMAKE_BUILD_TYPE=Release
     - cmake --build native-build
 
-    # Install the application into AppDir
     - mkdir -p AppDir
     - DESTDIR="$PWD/AppDir" cmake --install native-build --prefix /usr
 
-    # Download linuxdeploy
     - wget -O linuxdeploy.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-    - chmod +x linuxdeploy.AppImage
-
-    # Download the Qt plugin
     - wget -O linuxdeploy-plugin-qt.AppImage https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-    - chmod +x linuxdeploy-plugin-qt.AppImage
+    - chmod +x linuxdeploy.AppImage linuxdeploy-plugin-qt.AppImage
 
-    # Create the AppImage
     - export APPIMAGE_EXTRACT_AND_RUN=1
     - export NO_STRIP=1
-    - ./linuxdeploy.AppImage
-        --appdir AppDir
-        --executable AppDir/usr/bin/transistor
-        --plugin qt
+
+    - ./linuxdeploy.AppImage \
+        --appdir AppDir \
+        --executable AppDir/usr/bin/transistor \
+        --desktop-file AppDir/usr/share/applications/ru.transistor_radio.transistor.desktop \
+        --icon-file AppDir/usr/share/icons/hicolor/scalable/apps/ru.transistor_radio.transistor.svg \
+        --plugin qt \
         --output appimage
 
   artifacts:
