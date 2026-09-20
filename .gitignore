@@ -1,0 +1,14 @@
+.qodo
+build
+.vscode
+.cache
+.clang-format
+CMakeLists.txt.user
+po/
+po
+
+# Flatpak build artifacts
+.flatpak-builder/
+build-dir/
+repo/
+*.tar.gz

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Transistor
+GenericName=Internet Radio Player
+Comment=Internet radio player
+Exec=transistor
+Icon=ru.transistor_radio.transistor
+Terminal=false
+StartupWMClass=transistor
+Categories=Audio;Music;Player;

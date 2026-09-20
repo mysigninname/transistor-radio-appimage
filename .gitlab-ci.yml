@@ -1,0 +1,161 @@
+stages:
+  - build
+  - publish
+  - pages
+
+variables:
+  APP_ID: ru.transistor_radio.transistor
+  APP_NAME: Transistor
+  BUILD_DIR: build
+  RUNTIME_REPO: "https://flathub.org/repo/flathub.flatpakrepo"
+  OSTREE_REPO: ostree-repo
+  PAGES_URL: https://saurov.local-kde.org/transistor
+  GIT_STRATEGY: fetch
+
+# ------------------------------
+# Stage 1: сборка Flatpak
+# ------------------------------
+build-flatpak:
+  stage: build
+  tags:
+    - kde-sdk
+  script:
+    - echo "==> Сборка Flatpak"
+    - flatpak remote-add --user --if-not-exists flathub ${RUNTIME_REPO}
+    - rm -rf "$BUILD_DIR" "$OSTREE_REPO" public
+    - mkdir -p "$BUILD_DIR"
+    - flatpak-builder --user --install-deps-from=flathub --force-clean "$BUILD_DIR" .flatpak-manifest.json
+  artifacts:
+    paths:
+      - $BUILD_DIR
+
+# ------------------------------
+# Stage 2: публикация OSTree репозитория
+# ------------------------------
+publish-repo:
+  stage: publish
+  tags:
+    - kde-sdk
+  dependencies:
+    - build-flatpak
+
+  before_script:
+    - |
+      echo "==> Настройка GPG"
+      mkdir -p ~/.gnupg
+      chmod 700 ~/.gnupg
+
+      if [ -n "$GPG_PRIVATE_KEY" ]; then
+        echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+        GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/ {print $5; exit}')
+        echo "Используем GPG_KEY_ID=$GPG_KEY_ID"
+
+        echo "test" | gpg --batch --clear-sign --local-user "$GPG_KEY_ID" > /dev/null
+        echo "✓ GPG ключ работает без пароля"
+      else
+        echo "⚠ GPG_PRIVATE_KEY не задан"
+      fi
+
+
+  script:
+    - echo "==> Создание OSTree репозитория"
+    - mkdir -p "$OSTREE_REPO"
+    - ostree init --repo="$OSTREE_REPO" --mode=archive-z2
+
+    - echo "==> Экспорт сборки"
+    - flatpak build-export --gpg-sign="$GPG_KEY_ID" --gpg-homedir="$HOME/.gnupg" "$OSTREE_REPO" "$BUILD_DIR"
+
+
+
+    - |
+      if [ -n "$GPG_KEY_ID" ]; then
+        echo "==> Обновление репозитория С подписью"
+        flatpak build-update-repo "$OSTREE_REPO" \
+          --generate-static-deltas \
+          --gpg-sign="$GPG_KEY_ID" \
+          --gpg-homedir="$HOME/.gnupg"
+      else
+        echo "==> Обновление репозитория БЕЗ подписи"
+        flatpak build-update-repo "$OSTREE_REPO" \
+          --generate-static-deltas
+      fi
+
+    # ------------------------------
+    # Подготовка Pages
+    # ------------------------------
+    - mkdir -p public/repo
+    - cp -r "$OSTREE_REPO/"* public/repo/
+
+    # ------------------------------
+    # Генерация .flatpakrepo (USER-ориентированный)
+    # ------------------------------
+    - |
+      if [ -n "$GPG_KEY_ID" ]; then
+        GPG_KEY_BASE64="$(gpg --export "$GPG_KEY_ID" | base64 -w0)"
+
+        REPO_FILE="public/$APP_ID.flatpakrepo"
+
+        echo "[Flatpak Repo]"                    >  "$REPO_FILE"
+        echo "Title=$APP_NAME"                  >> "$REPO_FILE"
+        echo "Url=$PAGES_URL/repo"              >> "$REPO_FILE"
+        echo "Homepage=https://transistor-radio.ru/" >> "$REPO_FILE"
+        echo "Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg" >> "$REPO_FILE"
+        echo "Comment=Repository for $APP_NAME application"    >> "$REPO_FILE"
+        echo "Description=Repository for $APP_NAME application" >> "$REPO_FILE"
+        echo "GPGKey=$GPG_KEY_BASE64"            >> "$REPO_FILE"
+
+      else
+        REPO_FILE="public/$APP_ID.flatpakrepo"
+
+        echo "[Flatpak Repo]"                    >  "$REPO_FILE"
+        echo "Title=$APP_NAME"                  >> "$REPO_FILE"
+        echo "Url=$PAGES_URL/repo"              >> "$REPO_FILE"
+        echo "Homepage=https://transistor-radio.ru/" >> "$REPO_FILE"
+        echo "Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg" >> "$REPO_FILE"
+        echo "Comment=Repository for $APP_NAME application"    >> "$REPO_FILE"
+        echo "Description=Repository for $APP_NAME application" >> "$REPO_FILE"
+        echo "GPGVerify=false"            >> "$REPO_FILE"
+      fi
+
+    # ------------------------------
+    # Генерация .flatpakref
+    # ------------------------------
+    - |
+      REF_FILE="public/$APP_ID.flatpakref"
+
+      echo "[Flatpak Ref]"                     >  "$REF_FILE"
+      echo "Name=$APP_ID"                     >> "$REF_FILE"
+      echo "Title=$APP_NAME"                  >> "$REF_FILE"
+      echo "Comment=Internet Radio Player"    >> "$REF_FILE"
+      echo "Icon=https://transistor-radio.ru/assets/img/ru.transistor_radio.transistor.svg" >> "$REF_FILE"
+      echo "Branch=master"                    >> "$REF_FILE"
+      echo "IsRuntime=false"                  >> "$REF_FILE"
+      echo "RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo" >> "$REF_FILE"
+      echo "Url=$PAGES_URL/repo"              >> "$REF_FILE"
+      echo "SuggestRemoteName=transistor"      >> "$REF_FILE"
+      echo "GPGKey=$GPG_KEY_BASE64"            >> "$REF_FILE"
+
+    - echo "==> Репозиторий готов"
+
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
+
+# ------------------------------
+# Stage 3: GitLab Pages
+# ------------------------------
+pages:
+  stage: pages
+  tags:
+    - kde-sdk
+  dependencies:
+    - publish-repo
+  script:
+    - echo "==> Публикация GitLab Pages"
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

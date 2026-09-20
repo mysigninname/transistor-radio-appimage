@@ -1,0 +1,41 @@
+/*
+SPDX-FileCopyrightText: 2024 Yuri Saurov <dr@i-glu4it.ru>
+SPDX-License-Identifier: GPL-3.0-or-later
+*/
+
+#pragma once
+
+#include <QObject>
+#include <QQmlEngine>
+#include <QtQml>
+
+class QAbstractItemModel;
+class KColorSchemeManager;
+
+class ColorSchemer : public QObject
+{
+    Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+
+    Q_PROPERTY(QAbstractItemModel *model READ model CONSTANT)
+
+public:
+    static ColorSchemer *create(QQmlEngine *, QJSEngine *)
+    {
+        auto inst = &instance();
+        QJSEngine::setObjectOwnership(inst, QJSEngine::ObjectOwnership::CppOwnership);
+        return inst;
+    }
+
+    explicit ColorSchemer(QObject *parent = nullptr);
+
+    static ColorSchemer &instance();
+
+    QAbstractItemModel *model() const;
+    Q_INVOKABLE void apply(int idx);
+    Q_INVOKABLE void apply(const QString &name);
+    Q_INVOKABLE int indexForScheme(const QString &name) const;
+    Q_INVOKABLE QString nameForIndex(int index) const;
+
+};
