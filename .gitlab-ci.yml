@@ -13,6 +13,48 @@ variables:
   GIT_STRATEGY: fetch
 
 # ------------------------------
+# AppImage
+# ------------------------------
+build-appimage:
+  stage: build
+  tags:
+    - kde-sdk
+
+  script:
+    - echo "==> Building AppImage"
+
+    # Build the application using the KDE SDK runner
+    - rm -rf native-build AppDir
+    - cmake -S . -B native-build -G Ninja -DCMAKE_BUILD_TYPE=Release
+    - cmake --build native-build
+
+    # Install the application into AppDir
+    - mkdir -p AppDir
+    - DESTDIR="$PWD/AppDir" cmake --install native-build --prefix /usr
+
+    # Download linuxdeploy
+    - wget -O linuxdeploy.AppImage https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+    - chmod +x linuxdeploy.AppImage
+
+    # Download the Qt plugin
+    - wget -O linuxdeploy-plugin-qt.AppImage https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+    - chmod +x linuxdeploy-plugin-qt.AppImage
+
+    # Create the AppImage
+    - export APPIMAGE_EXTRACT_AND_RUN=1
+    - export NO_STRIP=1
+    - ./linuxdeploy.AppImage
+        --appdir AppDir
+        --executable AppDir/usr/bin/transistor
+        --plugin qt
+        --output appimage
+
+  artifacts:
+    paths:
+      - "*.AppImage"
+    expire_in: 1 week
+
+# ------------------------------
 # Stage 1: сборка Flatpak
 # ------------------------------
 build-flatpak:
